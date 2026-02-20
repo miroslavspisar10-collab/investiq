@@ -1,0 +1,7 @@
+{
+  "name": "investiq",
+  "version": "1.0.0",
+  "description": "InvestIQ — Investiční platforma s AI",
+  "private": true,
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InvestIQ — Investiční platforma</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070a0f;--s1:#0d1117;--s2:#161b24;--s3:#1e2530;--bd:#252d3a;
+  --ac:#00d4ff;--gn:#00ff88;--rd:#ff4757;--or:#ff6b35;--pu:#c084fc;
+  --tx:#e8edf5;--t2:#8899aa;--t3:#4a5568;
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.hdr{background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;gap:10px;flex-wrap:wrap}
+.logo{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.logo-dot{width:8px;height:8px;background:var(--ac);border-radius:50%;box-shadow:0 0 10px var(--ac);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nb{padding:7px 12px;border:none;border-radius:8px;background:transparent;color:var(--t2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.nb:hover{background:var(--s2);color:var(--tx)}
+.nb.on{background:var(--s3);color:var(--ac)}
+
+/* API KEY BAR */
+.apibar{background:var(--s2);border-bottom:1px solid var(--bd);padding:7px 20px;display:flex;align-items:center;gap:10px;font-size:12px}
+.apibar-label{color:var(--t2);white-space:nowrap;font-family:'DM Mono',monospace;font-size:11px}
+.apibar input{background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:5px 12px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:340px;transition:border-color .2s}
+.apibar input:focus{border-color:var(--ac)}
+.api-status{font-size:11px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:20px}
+.api-status.ok{background:rgba(0,255,136,.1);color:var(--gn);border:1px solid rgba(0,255,136,.2)}
+.api-status.err{background:rgba(255,71,87,.1);color:var(--rd);border:1px solid rgba(255,71,87,.2)}
+.api-status.empty{background:rgba(255,107,53,.1);color:var(--or);border:1px solid rgba(255,107,53,.2)}
+
+.ticker-bar{height:46px;border-top:1px solid var(--bd);overflow:hidden}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;white-space:nowrap}
+.live-dot{width:6px;height:6px;background:var(--gn);border-radius:50%;box-shadow:0 0 7px var(--gn);animation:pulse .9s infinite}
+
+.page{display:none;padding:20px 22px}
+.page.on{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.g4,.g2,.g3{grid-template-columns:1fr}}
+
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:13px;padding:16px;overflow:hidden}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.ct{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--t2)}
+
+.bdg{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.7px}
+.b-bl{background:rgba(0,212,255,.1);color:var(--ac);border:1px solid rgba(0,212,255,.2)}
+.b-gn{background:rgba(0,255,136,.1);color:var(--gn);border:1px solid rgba(0,255,136,.2)}
+.b-rd{background:rgba(255,71,87,.1);color:var(--rd);border:1px solid rgba(255,71,87,.2)}
+.b-pu{background:rgba(192,132,252,.1);color:var(--pu);border:1px solid rgba(192,132,252,.2)}
+.b-or{background:rgba(255,107,53,.1);color:var(--or);border:1px solid rgba(255,107,53,.2)}
+
+.stitle{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.stitle::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+.btn{padding:8px 15px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.bp{background:var(--ac);color:#000}
+.bp:hover:not(:disabled){background:#00b5d8;transform:translateY(-1px)}
+.bp:disabled{opacity:.4;cursor:not-allowed}
+.bs{background:var(--s2);color:var(--tx);border:1px solid var(--bd)}
+.bs:hover:not(:disabled){background:var(--s3)}
+.bs:disabled{opacity:.4;cursor:not-allowed}
+.b-danger{background:rgba(255,71,87,.1);color:var(--rd);border:1px solid rgba(255,71,87,.2)}
+.b-danger:hover{background:rgba(255,71,87,.2)}
+
+.inp{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px 13px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s;width:100%}
+.inp:focus{border-color:var(--ac)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.opp{background:var(--s2);border-radius:10px;padding:12px;border-left:3px solid;margin-bottom:8px;transition:transform .15s}
+.opp:hover{transform:translateX(3px)}
+.opp.lng{border-color:var(--gn)}.opp.sht{border-color:var(--rd)}
+.opp-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.opp-tk{font-family:'Syne',sans-serif;font-size:15px;font-weight:800}
+.opp-d{font-size:12px;color:var(--t2);line-height:1.5}
+
+.ni{padding:10px 0;border-bottom:1px solid var(--bd);cursor:pointer;transition:padding .12s}
+.ni:last-child{border-bottom:none}
+.ni:hover{padding-left:5px}
+.ni-t{font-size:13px;font-weight:500;margin-bottom:4px;line-height:1.5}
+.ni-m{display:flex;gap:8px;font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;align-items:center;flex-wrap:wrap}
+
+.aibox{background:var(--s2);border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:15px;font-size:13px;line-height:1.7;white-space:pre-wrap;margin-top:12px;position:relative;max-height:420px;overflow-y:auto}
+.aibox::before{content:'AI ANALÝZA';position:absolute;top:-9px;left:13px;font-size:9px;font-family:'DM Mono',monospace;font-weight:700;color:var(--ac);background:var(--s2);padding:0 7px;letter-spacing:1px}
+
+.chat-wrap{max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:11px}
+.msg{padding:10px 13px;border-radius:10px;font-size:13px;line-height:1.6;max-width:88%}
+.msg.u{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);align-self:flex-end;margin-left:auto}
+.msg.a{background:var(--s2);border:1px solid var(--bd);white-space:pre-wrap}
+
+.spin-row{display:flex;align-items:center;gap:8px;color:var(--t2);font-size:13px;padding:10px 0}
+.spin{width:14px;height:14px;border:2px solid var(--s3);border-top-color:var(--ac);border-radius:50%;animation:sp .8s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.tabs{display:flex;gap:3px;margin-bottom:13px;background:var(--s2);border-radius:8px;padding:3px;width:fit-content}
+.tab{padding:6px 12px;border-radius:6px;border:none;background:transparent;color:var(--t2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .2s}
+.tab.on{background:var(--s3);color:var(--tx)}
+
+.edu-card{background:var(--s2);border-radius:10px;padding:17px;cursor:pointer;transition:all .2s;border:1px solid transparent}
+.edu-card:hover{border-color:var(--ac);transform:translateY(-2px)}
+
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'DM Mono',monospace}
+.tbl td{padding:10px 10px;font-size:13px;border-bottom:1px solid rgba(37,45,58,.4);font-family:'DM Mono',monospace;vertical-align:middle}
+.tbl tr:hover td{background:var(--s2);cursor:pointer}
+
+.pf-stat{background:var(--s2);border-radius:10px;padding:13px 15px;border-left:3px solid var(--ac)}
+.pf-stat-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace;margin-bottom:4px}
+.pf-stat-value{font-family:'Syne',sans-serif;font-size:21px;font-weight:800}
+.pf-stat-sub{font-size:11px;font-family:'DM Mono',monospace;margin-top:3px}
+
+.src-tab{padding:5px 11px;border-radius:6px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s}
+.src-tab:hover{background:var(--s2);color:var(--tx)}
+.src-tab.on{background:var(--s3);border-color:var(--ac);color:var(--ac)}
+
+.tv-wrap{width:100%;overflow:hidden}
+.col{display:flex;flex-direction:column;gap:15px}
+.hidden{display:none!important}
+.mb3{margin-bottom:11px}.mb4{margin-bottom:15px}.mb6{margin-bottom:20px}.mt3{margin-top:11px}.mt4{margin-top:13px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+.divider{height:1px;background:var(--bd);margin:13px 0}
+
+/* error box */
+.errbox{background:rgba(255,71,87,.07);border:1px solid rgba(255,71,87,.2);border-radius:10px;padding:13px;font-size:13px;color:var(--rd);line-height:1.6}
+.infobox{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:13px;font-size:13px;color:var(--t2);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-top">
+    <div class="logo"><div class="logo-dot"></div>InvestIQ</div>
+    <nav class="nav">
+      <button class="nb on"  onclick="nav('dashboard',this)">📊 Dashboard</button>
+      <button class="nb"     onclick="nav('news',this)">📰 News</button>
+      <button class="nb"     onclick="nav('markets',this)">📈 Trhy</button>
+      <button class="nb"     onclick="nav('charts',this)">🕯️ Grafy</button>
+      <button class="nb"     onclick="nav('screener',this)">🔍 Screener</button>
+      <button class="nb"     onclick="nav('portfolio',this)">💼 Portfolio</button>
+      <button class="nb"     onclick="nav('education',this)">🎓 Vzdělávání</button>
+      <button class="nb"     onclick="nav('advisor',this)">🤖 AI Poradce</button>
+    </nav>
+    <div class="live-badge"><div class="live-dot"></div>LIVE · TradingView</div>
+  </div>
+
+  <!-- AI status bar - no key needed, proxy handles it -->
+  <div class="apibar">
+    <div class="live-dot" style="width:7px;height:7px;background:var(--gn);border-radius:50%;box-shadow:0 0 7px var(--gn);animation:pulse .9s infinite"></div>
+    <span class="apibar-label" style="color:var(--gn)">AI · Claude aktivní</span>
+    <span style="color:var(--t3);font-size:11px;font-family:'DM Mono',monospace;margin-left:8px">Všechny AI funkce jsou dostupné bez registrace</span>
+  </div>
+
+  <!-- TICKER TAPE -->
+  <div class="ticker-bar">
+    <div class="tradingview-widget-container" style="height:46px">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+      {"symbols":[
+        {"proName":"FOREXCOM:SPXUSD","title":"S&P 500"},{"proName":"FOREXCOM:NSXUSD","title":"Nasdaq"},
+        {"proName":"CBOE:VIX","title":"VIX"},{"proName":"TVC:US10Y","title":"10Y Yield"},
+        {"proName":"TVC:GOLD","title":"Gold"},{"proName":"TVC:SILVER","title":"Silver"},
+        {"proName":"TVC:USOIL","title":"WTI Oil"},{"proName":"BITSTAMP:BTCUSD","title":"Bitcoin"},
+        {"proName":"BITSTAMP:ETHUSD","title":"Ethereum"},{"proName":"FX:EURUSD","title":"EUR/USD"},
+        {"proName":"FX:USDCZK","title":"USD/CZK"},{"proName":"TVC:DXY","title":"DXY"}
+      ],"showSymbolLogo":true,"isTransparent":true,"displayMode":"adaptive","colorTheme":"dark","locale":"cs"}
+      </script>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<div id="page-dashboard" class="page on">
+  <div class="stitle">Dashboard</div>
+  <div class="g2 mb6">
+    <div class="card" style="padding:0">
+      <div class="ch" style="padding:14px 16px 0"><div class="ct">Trhy · Live</div><div class="bdg b-bl">TradingView LIVE</div></div>
+      <div class="tradingview-widget-container tv-wrap">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+        {"colorTheme":"dark","dateRange":"3M","showChart":true,"locale":"cs","isTransparent":true,"showSymbolLogo":true,"width":"100%","height":"560","tabs":[
+          {"title":"Indexy","symbols":[{"s":"FOREXCOM:SPXUSD","d":"S&P 500"},{"s":"FOREXCOM:NSXUSD","d":"Nasdaq 100"},{"s":"INDEX:DEU40","d":"DAX"},{"s":"CBOE:VIX","d":"VIX"},{"s":"TVC:DXY","d":"DXY"}]},
+          {"title":"Komodity","symbols":[{"s":"TVC:GOLD","d":"Gold"},{"s":"TVC:SILVER","d":"Silver"},{"s":"TVC:USOIL","d":"WTI Oil"},{"s":"TVC:UKOIL","d":"Brent"},{"s":"COMEX:HG1!","d":"Copper"}]},
+          {"title":"Crypto","symbols":[{"s":"BITSTAMP:BTCUSD","d":"Bitcoin"},{"s":"BITSTAMP:ETHUSD","d":"Ethereum"},{"s":"BINANCE:SOLUSDT","d":"Solana"},{"s":"BINANCE:XRPUSDT","d":"XRP"}]},
+          {"title":"Forex","symbols":[{"s":"FX:EURUSD","d":"EUR/USD"},{"s":"FX:GBPUSD","d":"GBP/USD"},{"s":"FX:USDJPY","d":"USD/JPY"},{"s":"FX:USDCZK","d":"USD/CZK"}]}
+        ]}
+        </script>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <div class="ch">
+          <div class="ct">🎯 AI Příležitosti z news</div>
+          <button class="btn bp" id="gen-opps-btn" onclick="generateOpportunities()" style="font-size:11px;padding:5px 11px">⚡ Generovat</button>
+        </div>
+        <div id="opps-loading" class="spin-row hidden"><div class="spin"></div>AI analyzuje zprávy...</div>
+        <div id="opps-container">
+          <div class="infobox">Zadej Claude API klíč nahoře a klikni "Generovat" — AI přečte aktuální zprávy a navrhne LONG/SHORT příležitosti.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">
+          <div class="ct">📰 Nejnovější zprávy</div>
+          <button class="btn bs" style="font-size:11px;padding:5px 10px" onclick="nav('news',document.querySelectorAll('.nb')[1])">Vše →</button>
+        </div>
+        <div id="dash-news"><div class="spin-row"><div class="spin"></div>Načítám zprávy...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ NEWS ══════════════ -->
+<div id="page-news" class="page">
+  <div class="stitle">News & Analýza</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Live RSS Zprávy</div><div class="bdg b-bl" id="news-count"></div></div>
+      <div class="row mb3" style="gap:6px">
+        <button class="src-tab on" onclick="loadNews('reuters',this)">Reuters</button>
+        <button class="src-tab" onclick="loadNews('cnbc',this)">CNBC</button>
+        <button class="src-tab" onclick="loadNews('investing',this)">Investing.com</button>
+        <button class="src-tab" onclick="loadNews('marketwatch',this)">MarketWatch</button>
+        <button class="src-tab" onclick="loadNews('yahoo',this)">Yahoo Finance</button>
+      </div>
+      <div id="news-loading" class="spin-row"><div class="spin"></div>Načítám...</div>
+      <div id="news-list"></div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="ch"><div class="ct">🤖 AI analýza zpráv → Příležitosti</div><div class="bdg b-pu">AI</div></div>
+        <p style="font-size:12px;color:var(--t2);margin-bottom:11px;line-height:1.6">Klikni na zprávu vlevo pro rychlou analýzu, nebo analyzuj všechny headlines najednou.</p>
+        <button class="btn bp mb3" id="analyze-all-btn" onclick="analyzeAllNews()">⚡ Analyzovat všechny zprávy</button>
+        <div id="news-ai-loading" class="spin-row hidden"><div class="spin"></div>AI analyzuje headlines...</div>
+        <div id="news-ai-text" class="aibox hidden"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct">📅 Ekonomický kalendář</div><div class="bdg b-or">Upcoming</div></div>
+        <div class="tradingview-widget-container tv-wrap">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+          {"colorTheme":"dark","isTransparent":true,"width":"100%","height":"320","locale":"cs","importanceFilter":"-1,0,1","countryFilter":"us,eu,gb,jp,cn,cz"}
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MARKETS ══════════════ -->
+<div id="page-markets" class="page">
+  <div class="stitle">Trhy — Live přehled</div>
+  <div class="g2 mb4">
+    <div class="card" style="padding:0">
+      <div class="ch" style="padding:14px 16px 0"><div class="ct">Nejaktivnější akcie</div><div class="bdg b-bl">LIVE</div></div>
+      <div class="tradingview-widget-container tv-wrap">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-hotlists.js" async>
+        {"colorTheme":"dark","dateRange":"1D","exchange":"US","showChart":true,"locale":"cs","isTransparent":true,"showSymbolLogo":true,"showFloatingTooltip":false,"width":"100%","height":"460","plotLineColorGrowing":"rgba(0,212,255,1)","plotLineColorFalling":"rgba(255,71,87,1)"}
+        </script>
+      </div>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="ch" style="padding:14px 16px 0"><div class="ct">Forex & Komodity</div><div class="bdg b-bl">LIVE</div></div>
+      <div class="tradingview-widget-container tv-wrap">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-forex-rates.js" async>
+        {"locale":"cs","colorTheme":"dark","isTransparent":true,"width":"100%","height":"460","currencies":["EUR","USD","GBP","JPY","CZK","CHF","BTC","ETH","XAU","XAG"]}
+        </script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CHARTS ══════════════ -->
+<div id="page-charts" class="page">
+  <div class="stitle">Grafy & Analýza</div>
+  <div class="card mb4" style="padding:12px">
+    <div class="row">
+      <input class="inp" id="chart-symbol" value="NASDAQ:AAPL" placeholder="Symbol..." style="max-width:280px" onkeydown="if(event.key==='Enter')applyChart()"/>
+      <button class="btn bp" onclick="applyChart()">Zobrazit</button>
+      <span style="color:var(--t2);font-size:12px">Rychlé:</span>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('NASDAQ:AAPL')">AAPL</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('NASDAQ:NVDA')">NVDA</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('NASDAQ:MSFT')">MSFT</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('NYSE:JPM')">JPM</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('TVC:GOLD')">Gold</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('BITSTAMP:BTCUSD')">BTC</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('FX:EURUSD')">EUR/USD</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('TVC:USOIL')">WTI</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" onclick="switchChartTab('chart',this)">📊 Graf</button>
+    <button class="tab"    onclick="switchChartTab('tech',this)">📐 Technická analýza</button>
+    <button class="tab"    onclick="switchChartTab('fund',this)">🏦 Fundamenty</button>
+    <button class="tab"    onclick="switchChartTab('cnews',this)">📰 Zprávy</button>
+  </div>
+  <div class="card" style="padding:0;min-height:520px">
+    <div id="chart-pane"  class="tv-wrap"></div>
+    <div id="tech-pane"   class="tv-wrap hidden"></div>
+    <div id="fund-pane"   class="tv-wrap hidden"></div>
+    <div id="cnews-pane"  class="tv-wrap hidden"></div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREENER ══════════════ -->
+<div id="page-screener" class="page">
+  <div class="stitle">Stock Screener</div>
+  <div class="g2 mb4">
+    <div class="card">
+      <div class="ch"><div class="ct">AI Analýza akcie</div><div class="bdg b-pu">AI</div></div>
+      <div class="row mb3">
+        <input class="inp" id="stock-input" placeholder="Ticker (AAPL, NVDA, MSFT, BTC-USD...)" onkeydown="if(event.key==='Enter')analyzeStock()"/>
+        <button class="btn bp" id="analyze-btn" onclick="analyzeStock()">Analyzovat</button>
+      </div>
+      <div class="row mb3" style="gap:6px">
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('AAPL')">AAPL</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('NVDA')">NVDA</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('MSFT')">MSFT</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('TSLA')">TSLA</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('JPM')">JPM</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('META')">META</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('BRK-B')">BRK-B</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('AMZN')">AMZN</button>
+      </div>
+      <div id="stock-loading" class="spin-row hidden"><div class="spin"></div>Analyzuji...</div>
+      <div id="stock-result" class="hidden"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Value Screener — výsledky</div><div class="bdg b-bl">Parametry</div></div>
+      <p style="font-size:12px;color:var(--t2);margin-bottom:12px">MCap &gt;5B · P/E &lt;20 · P/B &lt;2 · PEG &lt;1 · CR ≥1.7 · EPS 5Y &gt;0</p>
+      <table class="tbl">
+        <thead><tr><th>Ticker</th><th>P/E</th><th>P/B</th><th>PEG</th><th>EPS 5Y</th><th>Score</th></tr></thead>
+        <tbody id="screener-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" style="padding:0">
+    <div class="ch" style="padding:14px 16px 0"><div class="ct">Live Screener · TradingView</div><div class="bdg b-bl">LIVE</div></div>
+    <div class="tradingview-widget-container tv-wrap">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
+      {"width":"100%","height":"540","defaultColumn":"overview","defaultScreen":"most_capitalized","market":"america","showToolbar":true,"colorTheme":"dark","locale":"cs","isTransparent":true}
+      </script>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PORTFOLIO ══════════════ -->
+<div id="page-portfolio" class="page">
+  <div class="stitle">Portfolio Tracker</div>
+  <div class="g4 mb4">
+    <div class="pf-stat"><div class="pf-stat-label">Celková hodnota</div><div class="pf-stat-value" id="pf-total-val">—</div><div class="pf-stat-sub" style="color:var(--t2)">Vloženo: <span id="pf-total-cost">—</span></div></div>
+    <div class="pf-stat" style="border-left-color:var(--gn)"><div class="pf-stat-label">Celkový P&L</div><div class="pf-stat-value" id="pf-pnl">—</div><div class="pf-stat-sub" id="pf-pnl-pct">—</div></div>
+    <div class="pf-stat" style="border-left-color:var(--pu)"><div class="pf-stat-label">Pozice</div><div class="pf-stat-value" id="pf-count">0</div><div class="pf-stat-sub" style="color:var(--t2)">aktivních</div></div>
+    <div class="pf-stat" style="border-left-color:var(--or)"><div class="pf-stat-label">Nejlepší</div><div class="pf-stat-value" id="pf-best" style="font-size:16px">—</div><div class="pf-stat-sub" id="pf-best-pct" style="color:var(--gn)">—</div></div>
+  </div>
+  <div class="g2 mb4">
+    <div class="card">
+      <div class="ch"><div class="ct">➕ Přidat pozici</div></div>
+      <div class="col" style="gap:9px">
+        <div>
+          <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Ticker</div>
+          <input class="inp" id="pf-ticker" placeholder="AAPL, NVDA, BTC-USD..."/>
+        </div>
+        <div class="g2" style="gap:9px">
+          <div>
+            <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Počet kusů</div>
+            <input class="inp" id="pf-shares" type="number" placeholder="10" step="any" min="0"/>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nákupní cena ($)</div>
+            <input class="inp" id="pf-price" type="number" placeholder="150.00" step="any" min="0"/>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Poznámka</div>
+          <input class="inp" id="pf-note" placeholder="Důvod nákupu (volitelně)"/>
+        </div>
+        <div class="row">
+          <button class="btn bp" onclick="addPosition()" style="flex:1">Přidat pozici</button>
+          <button class="btn b-danger" onclick="clearPortfolio()">🗑️ Vymazat vše</button>
+        </div>
+        <div id="pf-msg" class="hidden" style="font-size:12px;font-family:'DM Mono',monospace"></div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">💡 Rychlý import</div>
+      <textarea class="inp" id="pf-import" rows="2" placeholder="AAPL 10 150.00, NVDA 5 400, BTC-USD 0.5 45000" style="resize:vertical"></textarea>
+      <button class="btn bs mt3" onclick="importPortfolio()" style="width:100%">Importovat</button>
+    </div>
+    <div class="card">
+      <div class="ch">
+        <div class="ct">🤖 AI Analýza portfolia</div>
+        <button class="btn bp" id="pf-ai-btn" onclick="analyzePortfolio()" style="font-size:11px;padding:5px 11px">Analyzovat</button>
+      </div>
+      <div id="pf-ai-loading" class="spin-row hidden"><div class="spin"></div>AI analyzuje...</div>
+      <div id="pf-ai-result" class="hidden"></div>
+      <div id="pf-ai-hint" class="infobox">Přidej pozice a klikni "Analyzovat" — AI zhodnotí diverzifikaci, rizika a navrhne optimalizace.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Moje pozice</div><div class="bdg b-pu" id="pf-saved-info">Uloženo v prohlížeči</div></div>
+    <div id="pf-empty" style="color:var(--t3);font-size:13px;padding:16px 0;text-align:center">Zatím žádné pozice. Přidej první pozici výše. 👆</div>
+    <div id="pf-table" class="hidden">
+      <table class="tbl">
+        <thead><tr><th>Ticker</th><th>Množství</th><th>Nák. cena</th><th>Akt. cena*</th><th>Hodnota*</th><th>P&L*</th><th>P&L %*</th><th>Poznámka</th><th></th></tr></thead>
+        <tbody id="pf-tbody"></tbody>
+      </table>
+      <p style="font-size:11px;color:var(--t3);margin-top:10px;font-family:'DM Mono',monospace">* Orientační simulace. Pro přesné P&L zadej aktuální cenu ručně nebo použij TradingView v záložce Grafy.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ EDUCATION ══════════════ -->
+<div id="page-education" class="page">
+  <div class="stitle">Vzdělávání</div>
+  <div id="edu-grid" class="g3">
+    <div class="edu-card" onclick="loadEdu('Fundamentální analýza','P/E, P/B, ROE, DCF, earnings quality — jak číst finanční výkazy')"><div style="font-size:26px;margin-bottom:8px">📊</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Fundamentální analýza</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">P/E, P/B, ROE, DCF, earnings quality</div><span class="bdg b-gn">Začátečník</span></div>
+    <div class="edu-card" onclick="loadEdu('Technická analýza','RSI, MACD, Fibonacci, support/resistance, svíčkové vzory')"><div style="font-size:26px;margin-bottom:8px">📈</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Technická analýza</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">RSI, MACD, Fibonacci, S/R, svíčky</div><span class="bdg b-bl">Střední</span></div>
+    <div class="edu-card" onclick="loadEdu('Makroekonomie a investování','Fed policy, inflace, GDP, výnosová křivka, DXY')"><div style="font-size:26px;margin-bottom:8px">🌍</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Makroekonomie</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">Fed, inflace, GDP, výnosová křivka</div><span class="bdg b-bl">Střední</span></div>
+    <div class="edu-card" onclick="loadEdu('Options a Deriváty','Calls, puts, Greeks, spreads, hedging strategie')"><div style="font-size:26px;margin-bottom:8px">⚡</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Options & Deriváty</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">Calls, puts, Greeks, spreads</div><span class="bdg b-pu">Pokročilý</span></div>
+    <div class="edu-card" onclick="loadEdu('Valuace firem','DCF model, comparable companies, EV/EBITDA, sum-of-parts')"><div style="font-size:26px;margin-bottom:8px">🏦</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Valuace firem</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">DCF, EV/EBITDA, comparable</div><span class="bdg b-pu">Pokročilý</span></div>
+    <div class="edu-card" onclick="loadEdu('Risk Management','Position sizing, stop-loss, diverzifikace, VaR, Sharpe ratio')"><div style="font-size:26px;margin-bottom:8px">🛡️</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Risk Management</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">Sizing, stop-loss, VaR, Sharpe</div><span class="bdg b-bl">Střední</span></div>
+  </div>
+  <div id="edu-detail" class="hidden">
+    <div class="mb4"><button class="btn bs" onclick="backEdu()">← Zpět</button></div>
+    <div class="g2">
+      <div class="card"><div class="ch"><div class="ct" id="edu-title">Materiál</div><div class="bdg b-bl">AI</div></div><div id="edu-load" class="spin-row"><div class="spin"></div>Načítám...</div><div id="edu-content" class="aibox hidden"></div></div>
+      <div class="card">
+        <div class="ch"><div class="ct">💬 AI Tutor</div><div class="bdg b-pu">Chat</div></div>
+        <div class="chat-wrap" id="edu-chat"><div style="color:var(--t3);font-size:13px">Zeptej se tutora na cokoliv...</div></div>
+        <div id="edu-chat-load" class="spin-row hidden"><div class="spin"></div>Přemýšlím...</div>
+        <div class="row"><input class="inp" id="edu-inp" placeholder="Napiš otázku..." onkeydown="if(event.key==='Enter')sendEdu()"/><button class="btn bp" onclick="sendEdu()">Odeslat</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADVISOR ══════════════ -->
+<div id="page-advisor" class="page">
+  <div class="stitle">AI Poradce</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Investiční asistent</div><div class="bdg b-pu">AI · Claude</div></div>
+    <div class="row mb4" style="gap:6px">
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Nejlepší value akcie pro rok 2025?')">Value akcie 2025</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Jak inflace ovlivňuje akciový trh?')">Inflace a trhy</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Jak sestavit defensivní portfolio na rok 2025?')">Defensivní portfolio</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Vysvětli invertovanou výnosovou křivku a její dopad')">Výnosová křivka</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('NVDA vs AMD — co koupit a proč?')">NVDA vs AMD</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Jak silný DXY ovlivňuje akciový trh a komodity?')">DXY a trhy</button>
+    </div>
+    <div class="chat-wrap" id="adv-chat" style="max-height:500px">
+      <div class="msg a">Ahoj! Jsem tvůj AI investiční poradce. Mohu pomoci s analýzou akcií, portfolio strategií nebo vzdělávacími dotazy.<br><br>⚠️ <strong>Nejde o finanční poradenství.</strong> Nejprve zadej Claude API klíč v horní liště.</div>
+    </div>
+    <div id="adv-load" class="spin-row hidden"><div class="spin"></div>AI přemýšlí...</div>
+    <div class="row mt4">
+      <input class="inp" id="adv-inp" placeholder="Zeptej se na cokoliv..." onkeydown="if(event.key==='Enter')sendAdv()"/>
+      <button class="btn bp" id="adv-btn" onclick="sendAdv()">Odeslat</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  renderPortfolio();
+  loadDashNews();
+  initChart();
+});
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function $(id) { return document.getElementById(id); }
+function show(id) { const e=$(id); if(e) e.classList.remove('hidden'); }
+function hide(id) { const e=$(id); if(e) e.classList.add('hidden'); }
+function setText(id, t) { const e=$(id); if(e) e.textContent=t; }
+function setHTML(id, h) { const e=$(id); if(e) e.innerHTML=h; }
+function esc(s) { const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
+
+function showErr(id, msg) {
+  const e = $(id);
+  if (!e) return;
+  e.className = 'errbox';
+  e.textContent = msg;
+  e.classList.remove('hidden');
+}
+function showAI(id, text) {
+  const e = $(id);
+  if (!e) return;
+  e.className = 'aibox';
+  e.textContent = text;
+  e.classList.remove('hidden');
+}
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+let chartsInit = false;
+let newsInit   = false;
+
+function nav(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  const page = $('page-' + id);
+  if (page) page.classList.add('on');
+  if (btn) btn.classList.add('on');
+  window.scrollTo(0, 0);
+  if (id === 'charts' && !chartsInit) { chartsInit = true; initChart(); }
+  if (id === 'news'   && !newsInit)   { newsInit   = true; loadNews('reuters', document.querySelector('.src-tab')); }
+}
+
+// ══════════════════════════════════════════════════
+// CLAUDE API — via backend proxy (klíč skrytý na serveru)
+// ══════════════════════════════════════════════════
+async function callClaude(messages, system, maxTokens=1000) {
+  const res = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, system, max_tokens: maxTokens })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error || `HTTP ${res.status}`);
+  }
+  const d = await res.json();
+  return d.content?.[0]?.text || '';
+}
+
+// ══════════════════════════════════════════════════
+// RSS NEWS — via allorigins.win CORS proxy
+// ══════════════════════════════════════════════════
+const RSS = {
+  reuters:     'https://feeds.reuters.com/reuters/businessNews',
+  cnbc:        'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114',
+  investing:   'https://www.investing.com/rss/news.rss',
+  marketwatch: 'https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines',
+  yahoo:       'https://finance.yahoo.com/news/rssindex'
+};
+
+let cachedHeadlines = [];
+
+async function fetchRSS(source) {
+  const feedUrl = RSS[source] || RSS.reuters;
+  // allorigins returns raw content
+  const proxy = 'https://allorigins.win/get?disableCache=true&url=' + encodeURIComponent(feedUrl);
+  const res = await fetch(proxy, { signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined });
+  if (!res.ok) throw new Error('Proxy error ' + res.status);
+  const json = await res.json();
+  const xml = json.contents;
+  if (!xml) throw new Error('Prázdná odpověď');
+
+  // Parse XML
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, 'text/xml');
+  const items = Array.from(doc.querySelectorAll('item')).slice(0, 25);
+  return items.map(item => ({
+    title: item.querySelector('title')?.textContent?.trim() || '',
+    link:  item.querySelector('link')?.textContent?.trim() || '#',
+    pubDate: item.querySelector('pubDate')?.textContent?.trim() || ''
+  })).filter(i => i.title);
+}
+
+function fmtDate(str) {
+  if (!str) return '';
+  try { return new Date(str).toLocaleString('cs-CZ', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+  catch { return str.substring(0,16); }
+}
+
+async function loadNews(source, btn) {
+  document.querySelectorAll('.src-tab').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  show('news-loading');
+  setHTML('news-list', '');
+  setText('news-count', '');
+  try {
+    const items = await fetchRSS(source);
+    cachedHeadlines = items.map(i => i.title);
+    hide('news-loading');
+    setText('news-count', items.length + ' zpráv');
+    setHTML('news-list', items.map(i => `
+      <div class="ni" onclick="window.open(${JSON.stringify(i.link)},'_blank')">
+        <div class="ni-t">${esc(i.title)}</div>
+        <div class="ni-m"><span>${fmtDate(i.pubDate)}</span><span style="color:var(--ac)">↗ otevřít</span></div>
+      </div>`).join(''));
+  } catch(e) {
+    hide('news-loading');
+    setHTML('news-list', `<div class="errbox">Chyba načítání RSS: ${esc(e.message)}<br><small>Zkus jiný zdroj nebo zkontroluj připojení k internetu.</small></div>`);
+  }
+}
+
+async function loadDashNews() {
+  try {
+    const items = await fetchRSS('reuters');
+    cachedHeadlines = items.map(i => i.title);
+    setHTML('dash-news', items.slice(0,6).map(i => `
+      <div class="ni" onclick="window.open(${JSON.stringify(i.link)},'_blank')">
+        <div class="ni-t">${esc(i.title)}</div>
+        <div class="ni-m"><span>Reuters</span><span>${fmtDate(i.pubDate)}</span><span style="color:var(--ac)">↗</span></div>
+      </div>`).join(''));
+  } catch {
+    setHTML('dash-news', '<div style="color:var(--t3);font-size:13px">Zprávy dostupné v záložce News.</div>');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// AI OPPORTUNITIES FROM NEWS
+// ══════════════════════════════════════════════════
+async function generateOpportunities() {
+  const btn = $('gen-opps-btn');
+  btn.disabled = true;
+  show('opps-loading');
+  const headlines = cachedHeadlines.length
+    ? cachedHeadlines.slice(0,12).join('\n')
+    : 'Fed drží sazby, naznačuje snížení v H2 2025\nNvidia Q4 překonává odhady o 18%\nČínský PMI 47.3\nOPEC+ zvyšuje těžbu, ropa -3%\nECB ponechává sazby';
+  try {
+    const raw = await callClaude([{
+      role:'user',
+      content:`Na základě těchto zpráv navrhni 4-5 investičních příležitostí (LONG i SHORT). Odpověz POUZE jako JSON array bez markdown:\n[{"ticker":"NVDA","type":"long","reason":"důvod","target":"+20%","risk":"Medium","conf":75}]\n\nZprávy:\n${headlines}`
+    }], 'Jsi investiční analytik. Odpovídej POUZE validním JSON array.', 600);
+
+    // Extract JSON even if wrapped in backticks
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('AI nevrátilo validní JSON');
+    const opps = JSON.parse(match[0]);
+    setHTML('opps-container', opps.map(o => {
+      const lng = o.type==='long';
+      const rc = o.risk==='Low'?'b-gn':o.risk==='High'?'b-rd':'b-or';
+      return `<div class="opp ${lng?'lng':'sht'}">
+        <div class="opp-h">
+          <div><span class="opp-tk">${esc(o.ticker)}</span><span style="font-size:11px;margin-left:7px;color:var(--t2)">${lng?'📈 LONG':'📉 SHORT'}</span></div>
+          <div style="text-align:right"><div style="font-size:14px;font-weight:700;font-family:Syne;color:${lng?'var(--gn)':'var(--rd)'}">${esc(o.target)}</div><div style="font-size:10px;color:var(--t2);font-family:'DM Mono'">conf. ${esc(String(o.conf))}%</div></div>
+        </div>
+        <div class="opp-d">${esc(o.reason)}</div>
+        <div style="margin-top:7px"><span class="bdg ${rc}">Risk: ${esc(o.risk)}</span></div>
+      </div>`;
+    }).join(''));
+  } catch(e) {
+    setHTML('opps-container', `<div class="errbox">${esc(e.message)}</div>`);
+  }
+  hide('opps-loading');
+  btn.disabled = false;
+}
+
+async function analyzeAllNews() {
+  const btn = $('analyze-all-btn');
+  btn.disabled = true;
+  show('news-ai-loading');
+  hide('news-ai-text');
+  const headlines = cachedHeadlines.length
+    ? cachedHeadlines.slice(0,15).join('\n')
+    : 'Nejprve načti zprávy kliknutím na zdroj vlevo.';
+  try {
+    const text = await callClaude([{
+      role:'user',
+      content:`Analyzuj tyto finanční zprávy a navrhni investiční příležitosti:\n\n${headlines}\n\nZahrň: 1) Hlavní tržní témata, 2) LONG příležitosti (ticker + důvod), 3) SHORT příležitosti (ticker + důvod), 4) Sektory k overweight/underweight, 5) Klíčová rizika.`
+    }], 'Jsi senior investiční analytik. Odpovídej strukturovaně, česky. Upozorni, že nejde o finanční poradenství.');
+    showAI('news-ai-text', text);
+  } catch(e) {
+    showErr('news-ai-text', e.message);
+  }
+  hide('news-ai-loading');
+  btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════════
+let curSym = 'NASDAQ:AAPL';
+let curChartTab = 'chart';
+
+function initChart() {
+  renderChartPane('chart', $('chart-pane'));
+}
+
+function setChart(s) { $('chart-symbol').value=s; applyChart(); }
+function applyChart() {
+  curSym = ($('chart-symbol').value||'').trim().toUpperCase() || 'NASDAQ:AAPL';
+  renderChartPane(curChartTab, $(curChartTab+'-pane'));
+}
+
+function switchChartTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  ['chart','tech','fund','cnews'].forEach(t => {
+    const p=$(t+'-pane');
+    if(p) p.classList.toggle('hidden', t!==tab);
+  });
+  curChartTab = tab;
+  renderChartPane(tab, $(tab+'-pane'));
+}
+
+function renderChartPane(tab, container) {
+  if(!container) return;
+  container.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'tradingview-widget-container';
+  const w = document.createElement('div');
+  w.className = 'tradingview-widget-container__widget';
+  wrap.appendChild(w);
+  const s = document.createElement('script');
+  s.async = true;
+  const cfgs = {
+    chart: { src:'advanced-chart', cfg:{ autosize:true, symbol:curSym, interval:'D', timezone:'Europe/Prague', theme:'dark', style:'1', locale:'cs', allow_symbol_change:true, backgroundColor:'rgba(13,17,23,0)', isTransparent:true, height:560 } },
+    tech:  { src:'technical-analysis', cfg:{ interval:'1D', width:'100%', isTransparent:true, height:500, symbol:curSym, showIntervalTabs:true, locale:'cs', colorTheme:'dark' } },
+    fund:  { src:'financials', cfg:{ isTransparent:true, displayMode:'regular', width:'100%', height:500, colorTheme:'dark', symbol:curSym, locale:'cs' } },
+    cnews: { src:'timeline', cfg:{ feedMode:'symbol', symbol:curSym, isTransparent:true, displayMode:'regular', width:'100%', height:500, colorTheme:'dark', locale:'en' } }
+  };
+  const { src, cfg } = cfgs[tab] || cfgs.chart;
+  s.src = `https://s3.tradingview.com/external-embedding/embed-widget-${src}.js`;
+  s.text = JSON.stringify(cfg);
+  wrap.appendChild(s);
+  container.appendChild(wrap);
+}
+
+// ══════════════════════════════════════════════════
+// SCREENER
+// ══════════════════════════════════════════════════
+[
+  {tk:'BRK-B',nm:'Berkshire Hathaway',pe:14.2,pb:1.4,peg:0.8,eps:'+11%',score:91},
+  {tk:'JNJ', nm:'Johnson & Johnson',  pe:15.8,pb:1.7,peg:0.9,eps:'+8%', score:88},
+  {tk:'CVX', nm:'Chevron',            pe:12.3,pb:1.9,peg:0.7,eps:'+15%',score:84},
+  {tk:'PFE', nm:'Pfizer',             pe:11.2,pb:1.5,peg:0.8,eps:'+6%', score:75},
+  {tk:'VZ',  nm:'Verizon',            pe:9.1, pb:1.6,peg:0.6,eps:'+4%', score:72},
+].forEach(r => {
+  const col = r.score>80?'var(--gn)':'var(--ac)';
+  $('screener-body').innerHTML += `<tr onclick="setQuickStock('${r.tk}')">
+    <td><strong style="font-family:Syne;font-size:14px">${r.tk}</strong><div style="font-size:11px;color:var(--t2)">${r.nm}</div></td>
+    <td>${r.pe}</td><td>${r.pb}</td>
+    <td style="color:${r.peg<1?'var(--gn)':'var(--tx)'}">${r.peg}</td>
+    <td style="color:var(--gn)">${r.eps}</td>
+    <td><div style="display:flex;align-items:center;gap:5px">
+      <div style="width:32px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden"><div style="width:${r.score}%;height:100%;background:${col}"></div></div>
+      <span style="color:${col};font-size:12px">${r.score}</span>
+    </div></td>
+  </tr>`;
+});
+
+function setQuickStock(t) {
+  $('stock-input').value = t;
+  analyzeStock();
+}
+
+async function analyzeStock() {
+  const tk = ($('stock-input').value||'').trim().toUpperCase();
+  if (!tk) return;
+  const btn = $('analyze-btn');
+  btn.disabled = true;
+  show('stock-loading');
+  hide('stock-result');
+  try {
+    const text = await callClaude([{
+      role:'user',
+      content:`Analyzuj akcii ${tk}. Zahrň: 1) Popis firmy, 2) Klíčové metriky (P/E, P/B, marže, dluh, EPS 5Y), 3) LONG teze, 4) SHORT teze, 5) Ocenění vs peers, 6) Katalyzátory a rizika, 7) Doporučený horizont.`
+    }], 'Jsi expert na akciovou analýzu. Odpovídej strukturovaně, konkrétně, česky. Upozorni, že nejde o finanční poradenství.');
+    showAI('stock-result', text);
+  } catch(e) {
+    showErr('stock-result', e.message);
+  }
+  hide('stock-loading');
+  btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════
+// PORTFOLIO
+// ══════════════════════════════════════════════════
+let pf = JSON.parse(localStorage.getItem('iq_pf') || '[]');
+function savePF() { localStorage.setItem('iq_pf', JSON.stringify(pf)); }
+
+function simPrice(ticker) {
+  const seed = ticker.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const base = 30 + (seed % 500);
+  return parseFloat((base * (1 + Math.sin(Date.now()/80000+seed)*0.04)).toFixed(2));
+}
+
+function pfMsg(msg, color) {
+  const e=$('pf-msg'); e.textContent=msg; e.style.color=color; show('pf-msg');
+  setTimeout(()=>hide('pf-msg'),3000);
+}
+
+function addPosition() {
+  const tk = ($('pf-ticker').value||'').trim().toUpperCase();
+  const sh = parseFloat($('pf-shares').value);
+  const pr = parseFloat($('pf-price').value);
+  const nt = ($('pf-note').value||'').trim();
+  if (!tk) { pfMsg('Zadej ticker!','var(--rd)'); return; }
+  if (!sh||sh<=0) { pfMsg('Zadej počet kusů!','var(--rd)'); return; }
+  if (!pr||pr<=0) { pfMsg('Zadej nákupní cenu!','var(--rd)'); return; }
+  pf.push({ id:Date.now(), ticker:tk, shares:sh, buyPrice:pr, note:nt });
+  savePF(); renderPortfolio();
+  $('pf-ticker').value=''; $('pf-shares').value=''; $('pf-price').value=''; $('pf-note').value='';
+  pfMsg(`✓ ${tk} přidán`,'var(--gn)');
+}
+
+function removePos(id) { pf=pf.filter(p=>p.id!==id); savePF(); renderPortfolio(); }
+function clearPortfolio() { if(!confirm('Smazat celé portfolio?')) return; pf=[]; savePF(); renderPortfolio(); }
+
+function importPortfolio() {
+  const raw = ($('pf-import').value||'').trim();
+  if (!raw) return;
+  let added = 0;
+  raw.split(/[\n,]+/).forEach(line => {
+    const p = line.trim().split(/\s+/);
+    if (p.length>=3) {
+      const tk=p[0].toUpperCase(), sh=parseFloat(p[1]), pr=parseFloat(p[2]);
+      if (tk&&sh>0&&pr>0) { pf.push({id:Date.now()+Math.random(),ticker:tk,shares:sh,buyPrice:pr,note:''}); added++; }
+    }
+  });
+  savePF(); renderPortfolio();
+  $('pf-import').value='';
+  pfMsg(`✓ Importováno ${added} pozic`,'var(--gn)');
+}
+
+function renderPortfolio() {
+  $('pf-count').textContent = pf.length;
+  if (!pf.length) {
+    show('pf-empty'); hide('pf-table');
+    ['pf-total-val','pf-total-cost','pf-pnl','pf-pnl-pct','pf-best','pf-best-pct'].forEach(id=>setText(id,'—'));
+    return;
+  }
+  hide('pf-empty'); show('pf-table');
+  let tv=0,tc=0,bestP=-Infinity,bestT='';
+  const rows = pf.map(p => {
+    const cp=simPrice(p.ticker), val=p.shares*cp, cost=p.shares*p.buyPrice;
+    const pnl=val-cost, pct=(pnl/cost)*100;
+    tv+=val; tc+=cost;
+    if(pct>bestP){bestP=pct;bestT=p.ticker;}
+    const col=pnl>=0?'var(--gn)':'var(--rd)';
+    const sg=pnl>=0?'+':'';
+    return `<tr>
+      <td><strong style="font-family:Syne">${esc(p.ticker)}</strong></td>
+      <td>${p.shares}</td>
+      <td>$${p.buyPrice.toFixed(2)}</td>
+      <td style="color:var(--ac)">$${cp.toFixed(2)}</td>
+      <td>$${val.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+      <td style="color:${col}">${sg}$${Math.abs(pnl).toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+      <td style="color:${col};font-weight:600">${sg}${pct.toFixed(2)}%</td>
+      <td style="color:var(--t2);font-size:12px">${esc(p.note||'—')}</td>
+      <td><button class="btn b-danger" style="padding:3px 8px;font-size:11px" onclick="removePos(${p.id})">✕</button></td>
+    </tr>`;
+  });
+  $('pf-tbody').innerHTML = rows.join('');
+  const tp=tv-tc, tpPct=(tp/tc)*100, col=tp>=0?'var(--gn)':'var(--rd)', sg=tp>=0?'+':'';
+  setText('pf-total-val','$'+tv.toLocaleString('en-US',{maximumFractionDigits:0}));
+  setText('pf-total-cost','$'+tc.toLocaleString('en-US',{maximumFractionDigits:0}));
+  $('pf-pnl').textContent=sg+'$'+Math.abs(tp).toLocaleString('en-US',{maximumFractionDigits:0});
+  $('pf-pnl').style.color=col;
+  $('pf-pnl-pct').textContent=sg+tpPct.toFixed(2)+'%';
+  $('pf-pnl-pct').style.color=col;
+  setText('pf-best',bestT||'—');
+  $('pf-best-pct').textContent=bestP>-Infinity?(bestP>=0?'+':'')+bestP.toFixed(2)+'%':'—';
+}
+
+async function analyzePortfolio() {
+  if (!pf.length) { alert('Přidej nejprve pozice.'); return; }
+  $('pf-ai-btn').disabled = true;
+  show('pf-ai-loading');
+  hide('pf-ai-result');
+  hide('pf-ai-hint');
+  const sum = pf.map(p=>{
+    const cp=simPrice(p.ticker), pct=(((cp-p.buyPrice)/p.buyPrice)*100).toFixed(1);
+    return `${p.ticker}: ${p.shares}x @ $${p.buyPrice} (sim. $${cp}, P&L ${pct}%)`;
+  }).join('\n');
+  try {
+    const text = await callClaude([{
+      role:'user',
+      content:`Analyzuj portfolio:\n${sum}\n\nZahrň: 1) Hodnocení, 2) Diverzifikace, 3) Koncentrační rizika, 4) Navrhované změny, 5) Chybějící expozice, 6) Rebalancing.`
+    }], 'Jsi expert na portfolio management. Odpovídej strukturovaně, česky. Nejde o finanční poradenství.');
+    showAI('pf-ai-result', text);
+  } catch(e) {
+    showErr('pf-ai-result', e.message);
+  }
+  hide('pf-ai-loading');
+  $('pf-ai-btn').disabled = false;
+}
+
+// ══════════════════════════════════════════════════
+// EDUCATION
+// ══════════════════════════════════════════════════
+let eduTopic='', eduHist=[];
+
+async function loadEdu(topic, desc) {
+  eduTopic=topic; eduHist=[];
+  hide('edu-grid'); show('edu-detail');
+  setText('edu-title', topic);
+  setHTML('edu-chat','<div style="color:var(--t3);font-size:13px">Zeptej se tutora...</div>');
+  show('edu-load'); hide('edu-content');
+  try {
+    const text = await callClaude([{role:'user',content:`Vzdělávací materiál: "${topic}". Kontext: ${desc}. Zahrň: pojmy, příklady s čísly, využití v praxi, chyby začátečníků, doporučené kroky.`}],
+      'Jsi finanční vzdělávatel. Vysvětluj s příklady a čísly. Piš česky.');
+    showAI('edu-content', text);
+  } catch(e) { showErr('edu-content', e.message); }
+  hide('edu-load');
+}
+
+function backEdu() { show('edu-grid'); hide('edu-detail'); }
+
+async function sendEdu() {
+  const inp=$('edu-inp'), msg=(inp.value||'').trim();
+  if(!msg||!eduTopic) return;
+  inp.value='';
+  const chat=$('edu-chat');
+  if(!chat.querySelector('.msg')) chat.innerHTML='';
+  const u=document.createElement('div'); u.className='msg u'; u.textContent=msg; chat.appendChild(u);
+  eduHist.push({role:'user',content:msg});
+  show('edu-chat-load');
+  try {
+    const text=await callClaude(eduHist,`Jsi tutor pro ${eduTopic}. Odpovídej konkrétně, česky.`);
+    eduHist.push({role:'assistant',content:text});
+    const a=document.createElement('div'); a.className='msg a'; a.textContent=text; chat.appendChild(a);
+  } catch(e) {
+    const a=document.createElement('div'); a.className='msg a'; a.style.color='var(--rd)'; a.textContent='Chyba: '+e.message; chat.appendChild(a);
+  }
+  hide('edu-chat-load');
+  chat.scrollTop=chat.scrollHeight;
+}
+
+// ══════════════════════════════════════════════════
+// ADVISOR
+// ══════════════════════════════════════════════════
+let advHist=[];
+function setAdv(t){$('adv-inp').value=t;}
+
+async function sendAdv() {
+  const inp=$('adv-inp'), msg=(inp.value||'').trim();
+  if(!msg) return;
+  inp.value='';
+  const chat=$('adv-chat');
+  const u=document.createElement('div'); u.className='msg u'; u.textContent=msg; chat.appendChild(u);
+  advHist.push({role:'user',content:msg});
+  $('adv-btn').disabled=true; show('adv-load');
+  chat.scrollTop=chat.scrollHeight;
+  try {
+    const text=await callClaude(advHist,'Jsi investiční poradce. Pomáháš s analýzou akcií, ekonomikou, portfoliem. Nejde o finanční poradenství. Odpovídej konkrétně, česky.');
+    advHist.push({role:'assistant',content:text});
+    const a=document.createElement('div'); a.className='msg a'; a.textContent=text; chat.appendChild(a);
+  } catch(e) {
+    const a=document.createElement('div'); a.className='msg a'; a.style.color='var(--rd)'; a.textContent='Chyba: '+e.message; chat.appendChild(a);
+  }
+  hide('adv-load'); $('adv-btn').disabled=false;
+  chat.scrollTop=chat.scrollHeight;
+}
+</script>
+</body>
+</html>
