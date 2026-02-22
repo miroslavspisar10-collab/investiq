@@ -108,7 +108,11 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
 
 .tbl{width:100%;border-collapse:collapse}
 .tbl th{text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'DM Mono',monospace}
-.tbl td{padding:10px 10px;font-size:13px;border-bottom:1px solid rgba(37,45,58,.4);font-family:'DM Mono',monospace;vertical-align:middle}
+.tbl td{padding:10px 10px;font-size:13px;border-bottom:1px solid rgba(37,45,58,.4);font-family:'DM Sans',sans-serif;vertical-align:middle}
+.tbl td.mono{font-family:'DM Mono',monospace}
+/* TradingView screener widget font override */
+.tv-screener-table__cell{font-family:'DM Mono',monospace!important}
+.tv-screener-table__head-left{font-family:'Syne',sans-serif!important}
 .tbl tr:hover td{background:var(--s2);cursor:pointer}
 
 .pf-stat{background:var(--s2);border-radius:10px;padding:13px 15px;border-left:3px solid var(--ac)}
@@ -161,20 +165,51 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
     <span style="color:var(--t3);font-size:11px;font-family:'DM Mono',monospace;margin-left:8px">Všechny AI funkce jsou dostupné bez registrace</span>
   </div>
 
-  <!-- TICKER TAPE -->
-  <div class="ticker-bar">
-    <div class="tradingview-widget-container" style="height:46px">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
-      {"symbols":[
-        {"proName":"FOREXCOM:SPXUSD","title":"S&P 500"},{"proName":"FOREXCOM:NSXUSD","title":"Nasdaq"},
-        {"proName":"CBOE:VIX","title":"VIX"},{"proName":"TVC:US10Y","title":"10Y Yield"},
-        {"proName":"TVC:GOLD","title":"Gold"},{"proName":"TVC:SILVER","title":"Silver"},
-        {"proName":"TVC:USOIL","title":"WTI Oil"},{"proName":"BITSTAMP:BTCUSD","title":"Bitcoin"},
-        {"proName":"BITSTAMP:ETHUSD","title":"Ethereum"},{"proName":"FX:EURUSD","title":"EUR/USD"},
-        {"proName":"FX:USDCZK","title":"USD/CZK"},{"proName":"TVC:DXY","title":"DXY"}
-      ],"showSymbolLogo":true,"isTransparent":true,"displayMode":"adaptive","colorTheme":"dark","locale":"cs"}
-      </script>
+  <!-- TICKER TAPE + EDIT -->
+  <div class="ticker-bar" style="position:relative">
+    <div id="ticker-wrap" style="height:46px">
+      <div class="tradingview-widget-container" style="height:46px" id="ticker-tv">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+        {"symbols":[
+          {"proName":"FOREXCOM:SPXUSD","title":"S&P 500"},{"proName":"FOREXCOM:NSXUSD","title":"Nasdaq"},
+          {"proName":"CBOE:VIX","title":"VIX"},{"proName":"TVC:US10Y","title":"10Y Yield"},
+          {"proName":"TVC:GOLD","title":"Gold"},{"proName":"TVC:SILVER","title":"Silver"},
+          {"proName":"TVC:USOIL","title":"WTI Oil"},{"proName":"TVC:NGAS","title":"Nat. Gas"},
+          {"proName":"BITSTAMP:BTCUSD","title":"Bitcoin"},{"proName":"BITSTAMP:ETHUSD","title":"Ethereum"},
+          {"proName":"FX:EURUSD","title":"EUR/USD"},{"proName":"FX:USDCZK","title":"USD/CZK"},
+          {"proName":"TVC:DXY","title":"DXY"},{"proName":"COMEX:HG1!","title":"Copper"},
+          {"proName":"TVC:UKOIL","title":"Brent"}
+        ],"showSymbolLogo":true,"isTransparent":true,"displayMode":"adaptive","colorTheme":"dark","locale":"cs"}
+        </script>
+      </div>
+    </div>
+    <button onclick="openTickerEdit()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--ac);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;z-index:10">✏️ Upravit</button>
+  </div>
+
+  <!-- Ticker Edit Modal -->
+  <div id="ticker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
+    <div style="background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:22px;width:560px;max-width:95vw;max-height:80vh;overflow-y:auto">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:14px">✏️ Upravit běžící pásek</div>
+      <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:10px">
+        Použij TradingView formát: <span style="color:var(--ac)">FOREXCOM:SPXUSD</span>, <span style="color:var(--ac)">TVC:GOLD</span>, <span style="color:var(--ac)">BITSTAMP:BTCUSD</span>, <span style="color:var(--ac)">FX:USDCZK</span>
+      </div>
+      <div class="row mb3">
+        <input class="inp" id="ticker-sym-inp" placeholder="TVC:GOLD" style="max-width:200px" onkeydown="if(event.key==='Enter')addTickerSym()"/>
+        <input class="inp" id="ticker-lbl-inp" placeholder="Gold" style="max-width:130px"/>
+        <button class="btn bp" onclick="addTickerSym()" style="font-size:12px">Přidat</button>
+      </div>
+      <div style="font-size:11px;color:var(--t3);font-family:'DM Mono',monospace;margin-bottom:10px">
+        Komodity: TVC:GOLD · TVC:SILVER · TVC:USOIL · TVC:NGAS · COMEX:HG1! · COMEX:PL1! (Platina)<br>
+        Akcie: NASDAQ:AAPL · NYSE:JPM · Indexy: FOREXCOM:SPXUSD · INDEX:DEU40<br>
+        Forex: FX:EURUSD · FX:USDCZK · Crypto: BITSTAMP:BTCUSD · BINANCE:SOLUSDT
+      </div>
+      <div id="ticker-edit-list" style="margin-bottom:14px"></div>
+      <div class="row">
+        <button class="btn bp" onclick="applyTickerEdit()" style="flex:1">✓ Použít změny</button>
+        <button class="btn bs" onclick="closeTickerEdit()">Zrušit</button>
+        <button class="btn b-danger" onclick="resetTickerDefault()">Reset</button>
+      </div>
     </div>
   </div>
 </header>
@@ -182,20 +217,98 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
 <!-- ══════════════ DASHBOARD ══════════════ -->
 <div id="page-dashboard" class="page on">
   <div class="stitle">Dashboard</div>
-  <div class="g2 mb6">
-    <div class="card" style="padding:0">
-      <div class="ch" style="padding:14px 16px 0"><div class="ct">Trhy · Live</div><div class="bdg b-bl">TradingView LIVE</div></div>
-      <div class="tradingview-widget-container tv-wrap">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
-        {"colorTheme":"dark","dateRange":"3M","showChart":true,"locale":"cs","isTransparent":true,"showSymbolLogo":true,"width":"100%","height":"560","tabs":[
-          {"title":"Indexy","symbols":[{"s":"FOREXCOM:SPXUSD","d":"S&P 500"},{"s":"FOREXCOM:NSXUSD","d":"Nasdaq 100"},{"s":"INDEX:DEU40","d":"DAX"},{"s":"CBOE:VIX","d":"VIX"},{"s":"TVC:DXY","d":"DXY"}]},
-          {"title":"Komodity","symbols":[{"s":"TVC:GOLD","d":"Gold"},{"s":"TVC:SILVER","d":"Silver"},{"s":"TVC:USOIL","d":"WTI Oil"},{"s":"TVC:UKOIL","d":"Brent"},{"s":"COMEX:HG1!","d":"Copper"}]},
-          {"title":"Crypto","symbols":[{"s":"BITSTAMP:BTCUSD","d":"Bitcoin"},{"s":"BITSTAMP:ETHUSD","d":"Ethereum"},{"s":"BINANCE:SOLUSDT","d":"Solana"},{"s":"BINANCE:XRPUSDT","d":"XRP"}]},
-          {"title":"Forex","symbols":[{"s":"FX:EURUSD","d":"EUR/USD"},{"s":"FX:GBPUSD","d":"GBP/USD"},{"s":"FX:USDJPY","d":"USD/JPY"},{"s":"FX:USDCZK","d":"USD/CZK"}]}
-        ]}
-        </script>
+
+  <!-- ROW 1: TradingView market overview — editovatelný -->
+  <div class="card mb6" style="padding:0">
+    <div class="ch" style="padding:14px 16px 0">
+      <div class="ct">Trhy · Live</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="bdg b-bl">TradingView LIVE</div>
+        <button onclick="openOverviewEdit()" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--ac);border-radius:6px;padding:3px 9px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace">✏️ Upravit</button>
       </div>
+    </div>
+    <!-- Overview Edit Modal -->
+    <div id="ov-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center">
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:22px;width:620px;max-width:96vw;max-height:85vh;overflow-y:auto">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:6px">✏️ Upravit grafy na dashboardu</div>
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:14px">Každý tab má název a seznam symbolů (TradingView formát)</div>
+
+        <div id="ov-tabs-list"></div>
+
+        <div style="margin-top:14px;padding:12px;background:var(--s2);border-radius:9px;border:1px solid var(--bd)">
+          <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Přidat nový tab</div>
+          <div class="row mb2">
+            <input class="inp" id="ov-tab-name" placeholder="Název tabu (např. Energie)" style="max-width:200px"/>
+            <button class="btn bp" onclick="addOverviewTab()" style="font-size:12px">+ Tab</button>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;padding:12px;background:var(--s2);border-radius:9px;border:1px solid var(--bd)">
+          <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Přidat symbol do tabu</div>
+          <div class="row mb2">
+            <input class="inp" id="ov-sym" placeholder="FOREXCOM:SPXUSD" style="max-width:200px" onkeydown="if(event.key==='Enter')addOverviewSym()"/>
+            <input class="inp" id="ov-sym-lbl" placeholder="S&P 500" style="max-width:130px"/>
+            <select id="ov-tab-sel" style="background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none"></select>
+            <button class="btn bp" onclick="addOverviewSym()" style="font-size:12px">+</button>
+          </div>
+          <div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;line-height:1.7">
+            Indexy: FOREXCOM:SPXUSD · FOREXCOM:NSXUSD · INDEX:DEU40 · INDEX:FTSE · CBOE:VIX<br>
+            Akcie: NASDAQ:AAPL · NYSE:JPM · XETR:AIR · LSE:VOD · SWX:ABBN (ABB)<br>
+            Komodity: TVC:GOLD · TVC:SILVER · TVC:USOIL · TVC:NGAS · COMEX:HG1!<br>
+            ETF: AMEX:SPY · AMEX:QQQ · LSE:EUNK · LSE:EIMI · XETR:EXS1<br>
+            Crypto: BITSTAMP:BTCUSD · BITSTAMP:ETHUSD · BINANCE:SOLUSDT<br>
+            Forex: FX:EURUSD · FX:USDCZK · FX:GBPUSD
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <button class="btn bp" onclick="applyOverviewEdit()" style="flex:1">✓ Použít změny</button>
+          <button class="btn bs" onclick="closeOverviewEdit()">Zrušit</button>
+          <button class="btn b-danger" onclick="resetOverviewDefault()">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="tradingview-widget-container tv-wrap" id="overview-widget-wrap">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+      {"colorTheme":"dark","dateRange":"3M","showChart":true,"locale":"cs","isTransparent":true,"showSymbolLogo":true,"width":"100%","height":"420","tabs":[
+        {"title":"Indexy","symbols":[{"s":"FOREXCOM:SPXUSD","d":"S&P 500"},{"s":"FOREXCOM:NSXUSD","d":"Nasdaq 100"},{"s":"INDEX:DEU40","d":"DAX"},{"s":"CBOE:VIX","d":"VIX"},{"s":"TVC:DXY","d":"DXY"}]},
+        {"title":"Komodity","symbols":[{"s":"TVC:GOLD","d":"Gold"},{"s":"TVC:SILVER","d":"Silver"},{"s":"TVC:USOIL","d":"WTI Oil"},{"s":"TVC:UKOIL","d":"Brent"},{"s":"COMEX:HG1!","d":"Copper"}]},
+        {"title":"Crypto","symbols":[{"s":"BITSTAMP:BTCUSD","d":"Bitcoin"},{"s":"BITSTAMP:ETHUSD","d":"Ethereum"},{"s":"BINANCE:SOLUSDT","d":"Solana"},{"s":"BINANCE:XRPUSDT","d":"XRP"}]},
+        {"title":"Forex","symbols":[{"s":"FX:EURUSD","d":"EUR/USD"},{"s":"FX:GBPUSD","d":"GBP/USD"},{"s":"FX:USDJPY","d":"USD/JPY"},{"s":"FX:USDCZK","d":"USD/CZK"}]}
+      ]}
+      </script>
+    </div>
+  </div>
+
+  <!-- ROW 2: Watchlist + AI + News -->
+  <div class="g2 mb6">
+
+    <!-- WATCHLIST — plně editovatelný -->
+    <div class="card">
+      <div class="ch">
+        <div class="ct">⭐ Moje watchlist</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn bs" style="font-size:11px;padding:4px 10px" id="wl-refresh-btn" onclick="refreshWatchlist()">↻ Refresh</button>
+          <button class="btn bp" style="font-size:11px;padding:4px 10px" onclick="openWlEdit()">✏️ Upravit</button>
+        </div>
+      </div>
+      <!-- Edit panel (skrytý) -->
+      <div id="wl-edit" class="hidden" style="margin-bottom:12px;padding:12px;background:var(--s2);border-radius:9px;border:1px solid var(--bd)">
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">Přidat symbol</div>
+        <div class="row mb3">
+          <input class="inp" id="wl-inp" placeholder="AAPL, MSFT, GC=F, BTC-USD, EURUSD=X, VOD.L ..." style="max-width:280px" onkeydown="if(event.key==='Enter')addWlItem()"/>
+          <input class="inp" id="wl-label" placeholder="Název (volitelný)" style="max-width:160px"/>
+          <button class="btn bp" onclick="addWlItem()" style="font-size:12px">Přidat</button>
+        </div>
+        <div style="font-size:11px;color:var(--t3);font-family:'DM Mono',monospace;margin-bottom:8px">
+          US akcie: AAPL · Evropa: VOD.L, AIR.PA, BMW.DE · Crypto: BTC-USD · Forex: EURUSD=X · Komodity: GC=F (Gold), CL=F (Oil)
+        </div>
+        <div id="wl-edit-list"></div>
+        <button class="btn bs" onclick="closeWlEdit()" style="margin-top:8px;width:100%">Zavřít</button>
+      </div>
+      <div id="wl-loading" class="spin-row hidden"><div class="spin"></div>Načítám ceny...</div>
+      <div id="wl-table"></div>
     </div>
 
     <div class="col">
@@ -206,7 +319,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
         </div>
         <div id="opps-loading" class="spin-row hidden"><div class="spin"></div>AI analyzuje zprávy...</div>
         <div id="opps-container">
-          <div class="infobox">Zadej Claude API klíč nahoře a klikni "Generovat" — AI přečte aktuální zprávy a navrhne LONG/SHORT příležitosti.</div>
+          <div class="infobox">Klikni "Generovat" — AI přečte aktuální zprávy a navrhne LONG/SHORT příležitosti.</div>
         </div>
       </div>
       <div class="card">
@@ -227,11 +340,12 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
     <div class="card">
       <div class="ch"><div class="ct">Live RSS Zprávy</div><div class="bdg b-bl" id="news-count"></div></div>
       <div class="row mb3" style="gap:6px">
-        <button class="src-tab on" onclick="loadNews('reuters',this)">Reuters</button>
+        <button class="src-tab on" onclick="loadNews('bloomberg',this)">Bloomberg</button>
         <button class="src-tab" onclick="loadNews('cnbc',this)">CNBC</button>
-        <button class="src-tab" onclick="loadNews('investing',this)">Investing.com</button>
-        <button class="src-tab" onclick="loadNews('marketwatch',this)">MarketWatch</button>
+        <button class="src-tab" onclick="loadNews('ft',this)">Financial Times</button>
         <button class="src-tab" onclick="loadNews('yahoo',this)">Yahoo Finance</button>
+        <button class="src-tab" onclick="loadNews('wsj',this)">WSJ</button>
+        <button class="src-tab" onclick="loadNews('seeking',this)">Seeking Alpha</button>
       </div>
       <div id="news-loading" class="spin-row"><div class="spin"></div>Načítám...</div>
       <div id="news-list"></div>
@@ -270,14 +384,35 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
         </script>
       </div>
     </div>
-    <div class="card" style="padding:0">
-      <div class="ch" style="padding:14px 16px 0"><div class="ct">Forex & Komodity</div><div class="bdg b-bl">LIVE</div></div>
-      <div class="tradingview-widget-container tv-wrap">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-forex-rates.js" async>
-        {"locale":"cs","colorTheme":"dark","isTransparent":true,"width":"100%","height":"460","currencies":["EUR","USD","GBP","JPY","CZK","CHF","BTC","ETH","XAU","XAG"]}
-        </script>
+    <div class="card">
+      <div class="ch">
+        <div class="ct">Forex & Komodity</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div id="fx-status" class="bdg b-bl">Načítám...</div>
+          <button class="btn bs" style="font-size:11px;padding:4px 9px" onclick="loadFxTable()">↻</button>
+          <button class="btn bp" style="font-size:11px;padding:4px 9px" onclick="openFxEdit()">✏️ Upravit</button>
+        </div>
       </div>
+      <!-- FX Edit panel -->
+      <div id="fx-edit" class="hidden" style="margin-bottom:12px;padding:12px;background:var(--s2);border-radius:9px;border:1px solid var(--bd)">
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:7px">Přidat symbol (Yahoo Finance formát)</div>
+        <div class="row mb3">
+          <input class="inp" id="fx-inp" placeholder="GC=F, CL=F, EURUSD=X..." style="max-width:200px" onkeydown="if(event.key==='Enter')addFxItem()"/>
+          <input class="inp" id="fx-lbl" placeholder="Název" style="max-width:120px"/>
+          <select id="fx-cat" style="background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none">
+            <option>Komodity</option><option>Forex</option><option>Crypto</option><option>Akcie</option>
+          </select>
+          <button class="btn bp" onclick="addFxItem()" style="font-size:12px">+</button>
+        </div>
+        <div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-bottom:8px">
+          Gold=GC=F · Silver=SI=F · Oil=CL=F · NatGas=NG=F · Copper=HG=F · Platinum=PL=F · Wheat=ZW=F<br>
+          EUR/USD=EURUSD=X · USD/CZK=USDCZK=X · BTC=BTC-USD · ETH=ETH-USD
+        </div>
+        <div id="fx-edit-list"></div>
+        <button class="btn bs" onclick="closeFxEdit()" style="margin-top:8px;width:100%">Zavřít</button>
+      </div>
+      <div id="fx-loading" class="spin-row"><div class="spin"></div>Načítám live ceny...</div>
+      <div id="fx-table"></div>
     </div>
   </div>
 </div>
@@ -346,42 +481,80 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
       </table>
     </div>
   </div>
-  <div class="card" style="padding:0">
-    <div class="ch" style="padding:14px 16px 0"><div class="ct">Live Screener · TradingView</div><div class="bdg b-bl">LIVE</div></div>
-    <div class="tradingview-widget-container tv-wrap">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
-      {"width":"100%","height":"540","defaultColumn":"overview","defaultScreen":"most_capitalized","market":"america","showToolbar":true,"colorTheme":"dark","locale":"cs","isTransparent":true}
-      </script>
+  <div class="card">
+    <div class="ch">
+      <div class="ct">Live Screener — Top akcie</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="sc-status" class="bdg b-bl">Načítám...</div>
+        <button class="btn bs" style="font-size:11px;padding:4px 10px" onclick="loadScreenerTable()">↻ Obnovit</button>
+      </div>
     </div>
+    <div id="sc-loading" class="spin-row"><div class="spin"></div>Načítám live ceny akcií...</div>
+    <div id="sc-table"></div>
   </div>
 </div>
 
 <!-- ══════════════ PORTFOLIO ══════════════ -->
 <div id="page-portfolio" class="page">
   <div class="stitle">Portfolio Tracker</div>
-  <div class="g4 mb4">
-    <div class="pf-stat"><div class="pf-stat-label">Celková hodnota</div><div class="pf-stat-value" id="pf-total-val">—</div><div class="pf-stat-sub" style="color:var(--t2)">Vloženo: <span id="pf-total-cost">—</span></div></div>
-    <div class="pf-stat" style="border-left-color:var(--gn)"><div class="pf-stat-label">Celkový P&L</div><div class="pf-stat-value" id="pf-pnl">—</div><div class="pf-stat-sub" id="pf-pnl-pct">—</div></div>
-    <div class="pf-stat" style="border-left-color:var(--pu)"><div class="pf-stat-label">Pozice</div><div class="pf-stat-value" id="pf-count">0</div><div class="pf-stat-sub" style="color:var(--t2)">aktivních</div></div>
-    <div class="pf-stat" style="border-left-color:var(--or)"><div class="pf-stat-label">Nejlepší</div><div class="pf-stat-value" id="pf-best" style="font-size:16px">—</div><div class="pf-stat-sub" id="pf-best-pct" style="color:var(--gn)">—</div></div>
+
+  <!-- Měna & kurz -->
+  <div class="card mb4" style="padding:12px 16px">
+    <div class="row" style="gap:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px">Domácí měna:</span>
+        <select id="pf-currency" onchange="onCurrencyChange()" style="background:var(--s2);border:1px solid var(--bd);border-radius:7px;padding:5px 10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none;cursor:pointer">
+          <option value="CZK">🇨🇿 CZK</option>
+          <option value="EUR">🇪🇺 EUR</option>
+          <option value="GBP">🇬🇧 GBP</option>
+          <option value="JPY">🇯🇵 JPY</option>
+          <option value="CHF">🇨🇭 CHF</option>
+          <option value="USD">🇺🇸 USD</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace">Kurz USD/</span>
+        <span id="pf-rate-display" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--ac)">načítám...</span>
+        <button class="btn bs" style="font-size:11px;padding:4px 9px" onclick="fetchExchangeRate()">↻</button>
+      </div>
+      <div style="font-size:11px;color:var(--t3);font-family:'DM Mono',monospace">P&L se zobrazí v USD i v domácí měně</div>
+    </div>
   </div>
+
+  <div class="g4 mb4">
+    <div class="pf-stat"><div class="pf-stat-label">Hodnota (USD)</div><div class="pf-stat-value" id="pf-total-val">—</div><div class="pf-stat-sub" style="color:var(--t2)">Vloženo: <span id="pf-total-cost">—</span></div></div>
+    <div class="pf-stat" style="border-left-color:var(--gn)"><div class="pf-stat-label">P&L (USD)</div><div class="pf-stat-value" id="pf-pnl">—</div><div class="pf-stat-sub" id="pf-pnl-pct">—</div></div>
+    <div class="pf-stat" style="border-left-color:var(--ac)"><div class="pf-stat-label" id="pf-local-label">P&L (CZK)</div><div class="pf-stat-value" id="pf-pnl-local">—</div><div class="pf-stat-sub" id="pf-val-local" style="color:var(--t2)">Hodnota: —</div></div>
+    <div class="pf-stat" style="border-left-color:var(--pu)"><div class="pf-stat-label">Pozice</div><div class="pf-stat-value" id="pf-count">0</div><div class="pf-stat-sub" style="color:var(--t2)">aktivních</div></div>
+  </div>
+
   <div class="g2 mb4">
     <div class="card">
       <div class="ch"><div class="ct">➕ Přidat pozici</div></div>
       <div class="col" style="gap:9px">
         <div>
           <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Ticker</div>
-          <input class="inp" id="pf-ticker" placeholder="AAPL, NVDA, BTC-USD..."/>
+          <input class="inp" id="pf-ticker" placeholder="AAPL, VOD.L, BTC-USD, GC=F, AIR.PA..."/>
         </div>
-        <div class="g2" style="gap:9px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
           <div>
             <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Počet kusů</div>
             <input class="inp" id="pf-shares" type="number" placeholder="10" step="any" min="0"/>
           </div>
           <div>
-            <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nákupní cena ($)</div>
+            <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nák. cena</div>
             <input class="inp" id="pf-price" type="number" placeholder="150.00" step="any" min="0"/>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Měna nákupu</div>
+            <select id="pf-buy-currency" style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px 10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:100%">
+              <option value="USD">USD</option>
+              <option value="CZK">CZK</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="CHF">CHF</option>
+            </select>
           </div>
         </div>
         <div>
@@ -396,7 +569,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
       </div>
       <div class="divider"></div>
       <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">💡 Rychlý import</div>
-      <textarea class="inp" id="pf-import" rows="2" placeholder="AAPL 10 150.00, NVDA 5 400, BTC-USD 0.5 45000" style="resize:vertical"></textarea>
+      <textarea class="inp" id="pf-import" rows="2" placeholder="AAPL 10 150.00 USD, VOD.L 200 1.50 GBP, BTC-USD 0.5 45000 USD" style="resize:vertical"></textarea>
       <button class="btn bs mt3" onclick="importPortfolio()" style="width:100%">Importovat</button>
     </div>
     <div class="card">
@@ -410,14 +583,20 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
     </div>
   </div>
   <div class="card">
-    <div class="ch"><div class="ct">Moje pozice</div><div class="bdg b-pu" id="pf-saved-info">Uloženo v prohlížeči</div></div>
+    <div class="ch"><div class="ct">Moje pozice</div><div class="bdg b-pu">Uloženo v prohlížeči</div></div>
     <div id="pf-empty" style="color:var(--t3);font-size:13px;padding:16px 0;text-align:center">Zatím žádné pozice. Přidej první pozici výše. 👆</div>
-    <div id="pf-table" class="hidden">
-      <table class="tbl">
-        <thead><tr><th>Ticker</th><th>Množství</th><th>Nák. cena</th><th>Akt. cena*</th><th>Hodnota*</th><th>P&L*</th><th>P&L %*</th><th>Poznámka</th><th></th></tr></thead>
+    <div id="pf-table" class="hidden" style="overflow-x:auto">
+      <table class="tbl" style="min-width:900px">
+        <thead><tr>
+          <th>Ticker</th><th>Množství</th><th>Nák. cena</th><th>Akt. cena</th>
+          <th>Hodnota (USD)</th><th>P&L (USD)</th><th>P&L %</th>
+          <th id="pf-local-col-hdr">P&L (CZK)</th><th>Poznámka</th><th></th>
+        </tr></thead>
         <tbody id="pf-tbody"></tbody>
       </table>
-      <p style="font-size:11px;color:var(--t3);margin-top:10px;font-family:'DM Mono',monospace">* Orientační simulace. Pro přesné P&L zadej aktuální cenu ručně nebo použij TradingView v záložce Grafy.</p>
+      <p style="font-size:11px;color:var(--t2);margin-top:10px;font-family:'DM Mono',monospace">
+        💡 Ceny: Yahoo Finance + Stooq (EU akcie) · P&L v lokální měně přepočten aktuálním kurzem
+      </p>
     </div>
   </div>
 </div>
@@ -476,12 +655,180 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans'
 'use strict';
 
 // ══════════════════════════════════════════════════
-// INIT
+// FOREX & KOMODITY TABLE
 // ══════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
+// FX_SYMBOLS is now managed via fxSymbols (editable, localStorage-backed)
+// See FX_DEFAULT / fxSymbols defined later in the file — loadFxTable uses fxSymbols
+
+async function loadFxTable() {
+  const syms = (typeof fxSymbols !== 'undefined' && fxSymbols.length) ? fxSymbols : FX_DEFAULT;
+  const fxLoad = document.getElementById('fx-loading');
+  const fxStat = document.getElementById('fx-status');
+  if (fxLoad) fxLoad.classList.remove('hidden');
+  if (fxStat) fxStat.textContent = 'Načítám...';
+
+  const prices = await Promise.all(syms.map(s => fetchRealPrice(s.ticker)));
+  if (fxLoad) fxLoad.classList.add('hidden');
+
+  let bycat = {};
+  syms.forEach((s, i) => { if (!bycat[s.cat]) bycat[s.cat] = []; bycat[s.cat].push({...s, price: prices[i]}); });
+
+  const catColors = { Forex:'var(--ac)', Komodity:'var(--or)', Crypto:'var(--pu)', Akcie:'var(--gn)' };
+  let html = '';
+  Object.entries(bycat).forEach(([cat, items]) => {
+    html += '<div style="font-size:10px;font-family:\'DM Mono\',monospace;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:10px 0 6px;border-bottom:1px solid var(--bd);margin-bottom:2px">' + cat + '</div>';
+    items.forEach(item => {
+      const col = catColors[item.cat] || 'var(--t2)';
+      if (item.price === null) {
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(37,45,58,.3)">' +
+          '<div style="display:flex;align-items:center;gap:9px"><span style="font-size:16px">' + item.flag + '</span>' +
+          '<span style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px">' + esc(item.label) + '</span></div>' +
+          '<span style="color:var(--t3);font-size:12px;font-family:\'DM Mono\',monospace">N/A</span></div>';
+      } else {
+        const decimals = item.ticker.includes('JPY') ? 2 : item.ticker.includes('=X') ? 4 : (item.price > 1000 ? 0 : 2);
+        const formatted = item.price.toLocaleString('en-US', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+        const prefix = item.ticker.includes('=X') ? '' : '$';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(37,45,58,.3);cursor:pointer;transition:background .15s" ' +
+          'onmouseover="this.style.background=\'var(--s2)\'" onmouseout="this.style.background=\'\'" ' +
+          'onclick="window.open(\'https://finance.yahoo.com/quote/' + encodeURIComponent(item.ticker) + '\',\'_blank\')">' +
+          '<div style="display:flex;align-items:center;gap:9px"><span style="font-size:16px">' + item.flag + '</span>' +
+          '<div><div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px;color:var(--tx)">' + esc(item.label) + '</div>' +
+          '<div style="font-size:10px;color:var(--t3);font-family:\'DM Mono\',monospace">' + esc(item.ticker) + '</div></div></div>' +
+          '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:500;color:' + col + '">' + prefix + formatted + '</div></div>';
+      }
+    });
+    html += '<div style="height:6px"></div>';
+  });
+
+  const fxTable = document.getElementById('fx-table');
+  if (fxTable) fxTable.innerHTML = html;
+  if (fxStat) { fxStat.textContent = 'LIVE'; fxStat.className = 'bdg b-gn'; }
+}
+
+// ══════════════════════════════════════════════════
+// LIVE SCREENER TABLE
+// ══════════════════════════════════════════════════
+const SCREENER_STOCKS = [
+  { ticker:'AAPL',  name:'Apple',           sector:'Tech' },
+  { ticker:'MSFT',  name:'Microsoft',       sector:'Tech' },
+  { ticker:'NVDA',  name:'Nvidia',          sector:'Tech' },
+  { ticker:'AMZN',  name:'Amazon',          sector:'Consumer' },
+  { ticker:'GOOGL', name:'Alphabet',        sector:'Tech' },
+  { ticker:'META',  name:'Meta',            sector:'Tech' },
+  { ticker:'TSLA',  name:'Tesla',           sector:'Auto' },
+  { ticker:'JPM',   name:'JPMorgan',        sector:'Finance' },
+  { ticker:'V',     name:'Visa',            sector:'Finance' },
+  { ticker:'JNJ',   name:'J&J',            sector:'Health' },
+  { ticker:'WMT',   name:'Walmart',         sector:'Retail' },
+  { ticker:'XOM',   name:'ExxonMobil',      sector:'Energy' },
+  { ticker:'BAC',   name:'Bank of America', sector:'Finance' },
+  { ticker:'UNH',   name:'UnitedHealth',    sector:'Health' },
+  { ticker:'BRK-B', name:'Berkshire B',     sector:'Finance' },
+  { ticker:'CVX',   name:'Chevron',         sector:'Energy' },
+  { ticker:'LLY',   name:'Eli Lilly',       sector:'Health' },
+  { ticker:'AVGO',  name:'Broadcom',        sector:'Tech' },
+  { ticker:'PG',    name:'P&G',            sector:'Consumer' },
+  { ticker:'MA',    name:'Mastercard',      sector:'Finance' },
+];
+
+const sectorColors = { Tech:'var(--ac)', Finance:'var(--gn)', Health:'var(--pu)', Consumer:'var(--or)', Energy:'var(--rd)', Auto:'var(--or)', Retail:'var(--t2)' };
+
+// Cache for prev prices to show change direction
+const prevPrices = {};
+
+async function loadScreenerTable() {
+  show('sc-loading');
+  setText('sc-status', 'Načítám...');
+  $('sc-status').className = 'bdg b-or';
+
+  const prices = await Promise.all(SCREENER_STOCKS.map(s => fetchRealPrice(s.ticker)));
+  hide('sc-loading');
+
+  const rows = SCREENER_STOCKS.map((s, i) => {
+    const p = prices[i];
+    const prev = prevPrices[s.ticker];
+    if (p !== null) prevPrices[s.ticker] = p;
+    const secCol = sectorColors[s.sector] || 'var(--t2)';
+    if (p === null) {
+      return `<tr style="cursor:pointer" onclick="window.open('https://finance.yahoo.com/quote/${s.ticker}','_blank')">
+        <td><strong style="font-family:'Syne',sans-serif;font-size:13px">${s.ticker}</strong><div style="font-size:11px;color:var(--t2);font-family:'DM Sans',sans-serif">${s.name}</div></td>
+        <td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.05);color:${secCol};font-family:'DM Mono',monospace">${s.sector}</span></td>
+        <td colspan="3" style="color:var(--t3);font-family:'DM Mono',monospace;font-size:12px">Načítání...</td>
+      </tr>`;
+    }
+    const arrow = prev && p > prev ? '▲' : prev && p < prev ? '▼' : '';
+    const arrowCol = prev && p > prev ? 'var(--gn)' : prev && p < prev ? 'var(--rd)' : 'var(--t3)';
+    return `<tr style="cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''" onclick="window.open('https://finance.yahoo.com/quote/${s.ticker}','_blank')">
+      <td>
+        <strong style="font-family:'Syne',sans-serif;font-size:13px;color:var(--tx)">${s.ticker}</strong>
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Sans',sans-serif">${s.name}</div>
+      </td>
+      <td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.05);color:${secCol};font-family:'DM Mono',monospace">${s.sector}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--tx)">$${p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:13px;color:${arrowCol}">${arrow}</td>
+      <td><a href="https://finance.yahoo.com/quote/${s.ticker}" target="_blank" style="color:var(--ac);font-size:11px;font-family:'DM Mono',monospace;text-decoration:none">↗ detail</a></td>
+    </tr>`;
+  });
+
+  $('sc-table').innerHTML = `
+    <table class="tbl" style="width:100%">
+      <thead><tr>
+        <th style="font-family:'DM Mono',monospace">Ticker / Firma</th>
+        <th style="font-family:'DM Mono',monospace">Sektor</th>
+        <th style="font-family:'DM Mono',monospace">Cena (USD)</th>
+        <th style="font-family:'DM Mono',monospace">Pohyb</th>
+        <th style="font-family:'DM Mono',monospace">Detail</th>
+      </tr></thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>
+    <div style="margin-top:10px;font-size:11px;color:var(--t3);font-family:'DM Mono',monospace">Ceny: Yahoo Finance · Klikni na řádek pro detail · ↻ pro refresh</div>`;
+
+  setText('sc-status', 'LIVE · ' + new Date().toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'}));
+  $('sc-status').className = 'bdg b-gn';
+
+  // Auto-refresh every 30s
+  clearTimeout(window._scTimer);
+  window._scTimer = setTimeout(loadScreenerTable, 30000);
+}
+
+// ══════════════════════════════════════════════════
+// INIT — pre-load news na pozadí, news tab bude okamžitý
+// ══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  // Restore currency preference
+  const savedCur = localStorage.getItem('iq_currency') || 'CZK';
+  currentCurrency = savedCur;
+  const curEl = document.getElementById('pf-currency');
+  if (curEl) curEl.value = savedCur;
+  await fetchExchangeRate();
+
   renderPortfolio();
-  loadDashNews();
+  refreshWatchlist();
   initChart();
+  loadDashNews();
+
+  // Pre-load markets in background (instant when tab opens)
+  loadFxTable();
+  loadScreenerTable();
+
+  // pre-fetch bloomberg na pozadí
+  try {
+    const items = await fetchRSS('bloomberg');
+    if (!items.length) return;
+    newsInit = true;
+    cachedHeadlines = items.map(i => i.title);
+    const loading = document.getElementById('news-loading');
+    const countEl = document.getElementById('news-count');
+    const list    = document.getElementById('news-list');
+    if (loading) loading.classList.add('hidden');
+    if (countEl) countEl.textContent = items.length + ' zpráv';
+    if (list) list.innerHTML = items.map(i =>
+      '<a class="ni" href="' + i.link + '" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit">' +
+      '<div class="ni-t">' + esc(i.title) + '</div>' +
+      '<div class="ni-m"><span>' + fmtDate(i.pubDate) + '</span>' +
+      '<span style="color:var(--ac)">&#8599; otevřít</span></div></a>'
+    ).join('');
+  } catch(e) { /* silently ignore — user can load manually */ }
 });
 
 // ══════════════════════════════════════════════════
@@ -522,8 +869,9 @@ function nav(id, btn) {
   if (page) page.classList.add('on');
   if (btn) btn.classList.add('on');
   window.scrollTo(0, 0);
-  if (id === 'charts' && !chartsInit) { chartsInit = true; initChart(); }
-  if (id === 'news'   && !newsInit)   { newsInit   = true; loadNews('reuters', document.querySelector('.src-tab')); }
+  if (id === 'charts'  && !chartsInit)  { chartsInit  = true; initChart(); }
+  if (id === 'news'    && !newsInit)    { newsInit    = true; loadNews('bloomberg', document.querySelector('.src-tab')); }
+  if (id === 'markets') { loadFxTable(); loadScreenerTable(); }
 }
 
 // ══════════════════════════════════════════════════
@@ -547,34 +895,69 @@ async function callClaude(messages, system, maxTokens=1000) {
 // RSS NEWS — via allorigins.win CORS proxy
 // ══════════════════════════════════════════════════
 const RSS = {
-  reuters:     'https://feeds.reuters.com/reuters/businessNews',
+  bloomberg:   'https://feeds.bloomberg.com/markets/news.rss',
   cnbc:        'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114',
-  investing:   'https://www.investing.com/rss/news.rss',
-  marketwatch: 'https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines',
-  yahoo:       'https://finance.yahoo.com/news/rssindex'
+  ft:          'https://www.ft.com/rss/home/uk',
+  yahoo:       'https://finance.yahoo.com/news/rssindex',
+  seeking:     'https://seekingalpha.com/market_currents.xml',
+  wsj:         'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
 };
 
 let cachedHeadlines = [];
 
 async function fetchRSS(source) {
-  const feedUrl = RSS[source] || RSS.reuters;
-  // allorigins returns raw content
-  const proxy = 'https://allorigins.win/get?disableCache=true&url=' + encodeURIComponent(feedUrl);
-  const res = await fetch(proxy, { signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined });
-  if (!res.ok) throw new Error('Proxy error ' + res.status);
-  const json = await res.json();
-  const xml = json.contents;
-  if (!xml) throw new Error('Prázdná odpověď');
+  const feedUrl = RSS[source] || RSS.bloomberg;
 
-  // Parse XML
+  // rss2json.com is the most reliable for these sources
+  const rss2json = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}&count=30`;
+
+  // Fallback raw proxies
+  const rawProxies = [
+    () => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(feedUrl)),
+    () => fetch('https://corsproxy.io/?' + encodeURIComponent(feedUrl)),
+  ];
+
+  // Try rss2json first (returns clean JSON)
+  try {
+    const res = await fetch(rss2json);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.status === 'ok' && json.items?.length) {
+        return json.items.map(i => ({
+          title:   i.title?.trim() || '',
+          link:    i.link || i.guid || '#',
+          pubDate: i.pubDate || '',
+        })).filter(i => i.title).slice(0, 25);
+      }
+    }
+  } catch(e) { /* fall through */ }
+
+  // Try raw proxies + parse XML
+  let xml = null, lastErr = '';
+  for (const proxyFn of rawProxies) {
+    try {
+      const res = await proxyFn();
+      if (!res.ok) { lastErr = 'HTTP ' + res.status; continue; }
+      const text = await res.text();
+      if (text && (text.includes('<item>') || text.includes('<entry>'))) { xml = text; break; }
+      lastErr = 'Prázdná odpověď';
+    } catch(e) { lastErr = e.message; }
+  }
+
+  if (!xml) throw new Error('Všechny proxy selhaly: ' + lastErr);
+
   const parser = new DOMParser();
   const doc = parser.parseFromString(xml, 'text/xml');
-  const items = Array.from(doc.querySelectorAll('item')).slice(0, 25);
-  return items.map(item => ({
-    title: item.querySelector('title')?.textContent?.trim() || '',
-    link:  item.querySelector('link')?.textContent?.trim() || '#',
-    pubDate: item.querySelector('pubDate')?.textContent?.trim() || ''
-  })).filter(i => i.title);
+  // Support both RSS <item> and Atom <entry>
+  const nodes = Array.from(doc.querySelectorAll('item, entry')).slice(0, 25);
+  return nodes.map(node => {
+    const title   = node.querySelector('title')?.textContent?.trim() || '';
+    const link    = node.querySelector('link')?.getAttribute('href')
+                 || node.querySelector('link')?.textContent?.trim()
+                 || '#';
+    const pubDate = node.querySelector('pubDate, published, updated')?.textContent?.trim() || '';
+    return { title, link, pubDate };
+  }).filter(i => i.title);
 }
 
 function fmtDate(str) {
@@ -595,10 +978,10 @@ async function loadNews(source, btn) {
     hide('news-loading');
     setText('news-count', items.length + ' zpráv');
     setHTML('news-list', items.map(i => `
-      <div class="ni" onclick="window.open(${JSON.stringify(i.link)},'_blank')">
+      <a class="ni" href="${i.link}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit">
         <div class="ni-t">${esc(i.title)}</div>
         <div class="ni-m"><span>${fmtDate(i.pubDate)}</span><span style="color:var(--ac)">↗ otevřít</span></div>
-      </div>`).join(''));
+      </a>`).join(''));
   } catch(e) {
     hide('news-loading');
     setHTML('news-list', `<div class="errbox">Chyba načítání RSS: ${esc(e.message)}<br><small>Zkus jiný zdroj nebo zkontroluj připojení k internetu.</small></div>`);
@@ -607,13 +990,13 @@ async function loadNews(source, btn) {
 
 async function loadDashNews() {
   try {
-    const items = await fetchRSS('reuters');
+    const items = await fetchRSS('bloomberg');
     cachedHeadlines = items.map(i => i.title);
     setHTML('dash-news', items.slice(0,6).map(i => `
-      <div class="ni" onclick="window.open(${JSON.stringify(i.link)},'_blank')">
+      <a class="ni" href="${i.link}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit">
         <div class="ni-t">${esc(i.title)}</div>
         <div class="ni-m"><span>Reuters</span><span>${fmtDate(i.pubDate)}</span><span style="color:var(--ac)">↗</span></div>
-      </div>`).join(''));
+      </a>`).join(''));
   } catch {
     setHTML('dash-news', '<div style="color:var(--t3);font-size:13px">Zprávy dostupné v záložce News.</div>');
   }
@@ -741,10 +1124,10 @@ function renderChartPane(tab, container) {
 ].forEach(r => {
   const col = r.score>80?'var(--gn)':'var(--ac)';
   $('screener-body').innerHTML += `<tr onclick="setQuickStock('${r.tk}')">
-    <td><strong style="font-family:Syne;font-size:14px">${r.tk}</strong><div style="font-size:11px;color:var(--t2)">${r.nm}</div></td>
-    <td>${r.pe}</td><td>${r.pb}</td>
-    <td style="color:${r.peg<1?'var(--gn)':'var(--tx)'}">${r.peg}</td>
-    <td style="color:var(--gn)">${r.eps}</td>
+    <td><strong style="font-family:'Syne',sans-serif;font-size:14px">${r.tk}</strong><div style="font-size:11px;color:var(--t2);font-family:'DM Sans',sans-serif">${r.nm}</div></td>
+    <td class="mono">${r.pe}</td><td class="mono">${r.pb}</td>
+    <td class="mono" style="color:${r.peg<1?'var(--gn)':'var(--tx)'}">${r.peg}</td>
+    <td class="mono" style="color:var(--gn)">${r.eps}</td>
     <td><div style="display:flex;align-items:center;gap:5px">
       <div style="width:32px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden"><div style="width:${r.score}%;height:100%;background:${col}"></div></div>
       <span style="color:${col};font-size:12px">${r.score}</span>
@@ -778,116 +1161,607 @@ async function analyzeStock() {
 }
 
 // ══════════════════════════════════════════════════
+// WATCHLIST (Dashboard)
+// ══════════════════════════════════════════════════
+const WL_DEFAULT = [
+  { ticker:'AAPL',    label:'Apple' },
+  { ticker:'NVDA',    label:'Nvidia' },
+  { ticker:'MSFT',    label:'Microsoft' },
+  { ticker:'BITSTAMP:BTCUSD', label:'Bitcoin', noYahoo:true, tvOnly:true, price:null },
+  { ticker:'GC=F',    label:'Gold' },
+  { ticker:'EURUSD=X',label:'EUR/USD' },
+  { ticker:'USDCZK=X',label:'USD/CZK' },
+];
+let watchlist = JSON.parse(localStorage.getItem('iq_wl') || 'null') || WL_DEFAULT;
+function saveWL() { localStorage.setItem('iq_wl', JSON.stringify(watchlist)); }
+
+function openWlEdit() {
+  document.getElementById('wl-edit').classList.remove('hidden');
+  renderWlEditList();
+}
+function closeWlEdit() {
+  document.getElementById('wl-edit').classList.add('hidden');
+}
+function renderWlEditList() {
+  const el = document.getElementById('wl-edit-list');
+  if (!watchlist.length) { el.innerHTML = '<div style="color:var(--t3);font-size:12px">Watchlist je prázdný.</div>'; return; }
+  el.innerHTML = watchlist.map((w,i) =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd)">' +
+    '<span style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--ac)">' + esc(w.ticker) + '</span>' +
+    '<span style="font-size:12px;color:var(--t2)">' + esc(w.label||'') + '</span>' +
+    '<button onclick="removeWlItem(' + i + ')" style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--rd);border-radius:5px;padding:2px 8px;cursor:pointer;font-size:11px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+function addWlItem() {
+  const tk = (document.getElementById('wl-inp').value||'').trim().toUpperCase();
+  const lb = (document.getElementById('wl-label').value||'').trim() || tk;
+  if (!tk) return;
+  watchlist.push({ ticker: tk, label: lb });
+  saveWL();
+  document.getElementById('wl-inp').value='';
+  document.getElementById('wl-label').value='';
+  renderWlEditList();
+  refreshWatchlist();
+}
+function removeWlItem(i) {
+  watchlist.splice(i,1);
+  saveWL();
+  renderWlEditList();
+  refreshWatchlist();
+}
+
+async function refreshWatchlist() {
+  const el = document.getElementById('wl-table');
+  const ld = document.getElementById('wl-loading');
+  if (ld) ld.classList.remove('hidden');
+  if (!watchlist.length) {
+    if (ld) ld.classList.add('hidden');
+    el.innerHTML = '<div style="color:var(--t3);font-size:13px;padding:10px 0">Watchlist je prázdný — klikni ✏️ Upravit.</div>';
+    return;
+  }
+  const prices = await Promise.all(watchlist.map(w => w.tvOnly ? Promise.resolve(null) : fetchRealPrice(w.ticker)));
+  if (ld) ld.classList.add('hidden');
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
+    watchlist.map((w,i) => {
+      const p = prices[i];
+      const decimals = w.ticker.includes('JPY') ? 2 : w.ticker.includes('=X') ? 4 : w.ticker.includes('BTC') ? 0 : 2;
+      const pStr = p !== null ? '$' + p.toLocaleString('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}) : '<span style="color:var(--t3)">—</span>';
+      return '<tr style="border-bottom:1px solid rgba(37,45,58,.4)">' +
+        '<td style="padding:10px 8px;font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px;color:var(--tx)">' + esc(w.ticker) + '</td>' +
+        '<td style="padding:10px 8px;font-size:12px;color:var(--t2);font-family:\'DM Sans\',sans-serif">' + esc(w.label) + '</td>' +
+        '<td style="padding:10px 8px;font-family:\'DM Mono\',monospace;font-size:14px;color:var(--ac);text-align:right">' + pStr + '</td>' +
+        '<td style="padding:10px 8px;text-align:right"><a href="https://finance.yahoo.com/quote/' + encodeURIComponent(w.ticker) + '" target="_blank" style="color:var(--t3);font-size:10px;font-family:\'DM Mono\',monospace;text-decoration:none">↗</a></td>' +
+        '</tr>';
+    }).join('') + '</table>';
+}
+
+// ══════════════════════════════════════════════════
+// EXCHANGE RATES & CURRENCY
+// ══════════════════════════════════════════════════
+const CURRENCY_TICKERS = { CZK:'USDCZK=X', EUR:'EURUSD=X', GBP:'GBPUSD=X', JPY:'USDJPY=X', CHF:'USDCHF=X', USD:null };
+let currentCurrency = localStorage.getItem('iq_currency') || 'CZK';
+let usdToLocal = 1; // rate: 1 USD = X local
+
+async function fetchExchangeRate() {
+  const cur = document.getElementById('pf-currency')?.value || currentCurrency;
+  const ticker = CURRENCY_TICKERS[cur];
+  if (!ticker) { usdToLocal = 1; updateCurrencyDisplay(cur, 1); return; }
+  try {
+    let rate = await fetchRealPrice(ticker);
+    if (!rate) throw new Error('no rate');
+    // EURUSD=X is inverted (USD per EUR), GBPUSD=X too — convert to USD→local
+    if (cur === 'EUR') rate = 1 / rate;
+    if (cur === 'GBP') rate = 1 / rate;
+    usdToLocal = rate;
+    updateCurrencyDisplay(cur, rate);
+  } catch {
+    usdToLocal = cur === 'CZK' ? 23.5 : cur === 'EUR' ? 0.93 : cur === 'GBP' ? 0.79 : cur === 'JPY' ? 149 : cur === 'CHF' ? 0.89 : 1;
+    updateCurrencyDisplay(cur, usdToLocal);
+  }
+}
+
+function updateCurrencyDisplay(cur, rate) {
+  const el = document.getElementById('pf-rate-display');
+  if (el) el.textContent = '1 USD = ' + rate.toFixed(cur==='JPY'?1:4) + ' ' + cur;
+  const lbl = document.getElementById('pf-local-label');
+  const hdr = document.getElementById('pf-local-col-hdr');
+  if (lbl) lbl.textContent = 'P&L (' + cur + ')';
+  if (hdr) hdr.textContent = 'P&L (' + cur + ')';
+}
+
+function onCurrencyChange() {
+  const cur = document.getElementById('pf-currency').value;
+  currentCurrency = cur;
+  localStorage.setItem('iq_currency', cur);
+  fetchExchangeRate().then(() => renderPortfolio());
+}
+
+// ══════════════════════════════════════════════════
 // PORTFOLIO
 // ══════════════════════════════════════════════════
 let pf = JSON.parse(localStorage.getItem('iq_pf') || '[]');
 function savePF() { localStorage.setItem('iq_pf', JSON.stringify(pf)); }
 
-function simPrice(ticker) {
-  const seed = ticker.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-  const base = 30 + (seed % 500);
-  return parseFloat((base * (1 + Math.sin(Date.now()/80000+seed)*0.04)).toFixed(2));
-}
-
 function pfMsg(msg, color) {
-  const e=$('pf-msg'); e.textContent=msg; e.style.color=color; show('pf-msg');
-  setTimeout(()=>hide('pf-msg'),3000);
+  const e=document.getElementById('pf-msg');
+  e.textContent=msg; e.style.color=color;
+  e.classList.remove('hidden');
+  setTimeout(()=>e.classList.add('hidden'),3000);
 }
 
 function addPosition() {
-  const tk = ($('pf-ticker').value||'').trim().toUpperCase();
-  const sh = parseFloat($('pf-shares').value);
-  const pr = parseFloat($('pf-price').value);
-  const nt = ($('pf-note').value||'').trim();
+  const tk  = (document.getElementById('pf-ticker').value||'').trim().toUpperCase();
+  const sh  = parseFloat(document.getElementById('pf-shares').value);
+  const pr  = parseFloat(document.getElementById('pf-price').value);
+  const cur = document.getElementById('pf-buy-currency').value;
+  const nt  = (document.getElementById('pf-note').value||'').trim();
   if (!tk) { pfMsg('Zadej ticker!','var(--rd)'); return; }
   if (!sh||sh<=0) { pfMsg('Zadej počet kusů!','var(--rd)'); return; }
   if (!pr||pr<=0) { pfMsg('Zadej nákupní cenu!','var(--rd)'); return; }
-  pf.push({ id:Date.now(), ticker:tk, shares:sh, buyPrice:pr, note:nt });
+  // Convert buy price to USD for uniform P&L
+  let buyPriceUSD = pr;
+  if (cur === 'CZK') buyPriceUSD = pr / usdToLocal;
+  else if (cur === 'EUR') buyPriceUSD = pr / (1/usdToLocal); // rough
+  // Just store original + currency, convert dynamically
+  pf.push({ id:Date.now(), ticker:tk, shares:sh, buyPrice:pr, buyCurrency:cur, note:nt });
   savePF(); renderPortfolio();
-  $('pf-ticker').value=''; $('pf-shares').value=''; $('pf-price').value=''; $('pf-note').value='';
-  pfMsg(`✓ ${tk} přidán`,'var(--gn)');
+  document.getElementById('pf-ticker').value='';
+  document.getElementById('pf-shares').value='';
+  document.getElementById('pf-price').value='';
+  document.getElementById('pf-note').value='';
+  pfMsg('✓ ' + tk + ' přidán','var(--gn)');
 }
 
 function removePos(id) { pf=pf.filter(p=>p.id!==id); savePF(); renderPortfolio(); }
 function clearPortfolio() { if(!confirm('Smazat celé portfolio?')) return; pf=[]; savePF(); renderPortfolio(); }
 
 function importPortfolio() {
-  const raw = ($('pf-import').value||'').trim();
+  const raw = (document.getElementById('pf-import').value||'').trim();
   if (!raw) return;
   let added = 0;
   raw.split(/[\n,]+/).forEach(line => {
     const p = line.trim().split(/\s+/);
-    if (p.length>=3) {
-      const tk=p[0].toUpperCase(), sh=parseFloat(p[1]), pr=parseFloat(p[2]);
-      if (tk&&sh>0&&pr>0) { pf.push({id:Date.now()+Math.random(),ticker:tk,shares:sh,buyPrice:pr,note:''}); added++; }
+    if (p.length >= 3) {
+      const tk=p[0].toUpperCase(), sh=parseFloat(p[1]), pr=parseFloat(p[2]), cur=p[3]||'USD';
+      if (tk&&sh>0&&pr>0) { pf.push({id:Date.now()+Math.random(),ticker:tk,shares:sh,buyPrice:pr,buyCurrency:cur,note:''}); added++; }
     }
   });
   savePF(); renderPortfolio();
-  $('pf-import').value='';
-  pfMsg(`✓ Importováno ${added} pozic`,'var(--gn)');
+  document.getElementById('pf-import').value='';
+  pfMsg('✓ Importováno ' + added + ' pozic','var(--gn)');
 }
 
-function renderPortfolio() {
-  $('pf-count').textContent = pf.length;
+// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// PRICE FETCHING — 4 sources, EU ETF support
+// ══════════════════════════════════════════════════
+const priceCache = {};
+
+// Map Yahoo tickers that need special treatment
+function normalizeYahooTicker(tk) {
+  // VIX futures — use Yahoo's correct symbol
+  if (tk === 'VIX' || tk === '^VIX') return '^VIX';
+  // Natural Gas futures
+  if (tk === 'NG=F' || tk === 'NGAS') return 'NG=F';
+  // Brent
+  if (tk === 'BZ=F') return 'BZ=F';
+  return tk;
+}
+
+// Convert ticker to Stooq format
+function toStooqTicker(tk) {
+  const t = tk.toLowerCase();
+  // EU exchanges
+  if (t.endsWith('.l'))  return t.replace('.l', '.uk');   // London
+  if (t.endsWith('.pa')) return t.replace('.pa', '.fr');  // Paris
+  if (t.endsWith('.de')) return t;                        // Frankfurt (same)
+  if (t.endsWith('.mi')) return t.replace('.mi', '.it');  // Milan
+  if (t.endsWith('.as')) return t.replace('.as', '.nl');  // Amsterdam
+  if (t.endsWith('.sw')) return t.replace('.sw', '.ch');  // Switzerland
+  if (t.endsWith('.br')) return t.replace('.br', '.be');  // Brussels
+  if (t.endsWith('.ls')) return t.replace('.ls', '.pt');  // Lisbon
+  // Futures — Stooq uses just the commodity code
+  if (t === 'gc=f') return 'xauusd';   // Gold in USD
+  if (t === 'si=f') return 'xagusd';   // Silver
+  if (t === 'cl=f') return 'crude';    // WTI Oil
+  if (t === 'bz=f') return 'brent';    // Brent
+  if (t === 'ng=f') return 'natgas';   // Nat Gas
+  if (t === 'hg=f') return 'copper';   // Copper
+  if (t === 'pl=f') return 'xptusd';   // Platinum
+  if (t === 'zw=f') return 'wheat';    // Wheat
+  // Forex — Yahoo uses XXXYYY=X, Stooq uses xxx/yyy or direct
+  if (t.endsWith('=x')) return t.replace('=x', '').replace('usd', '/usd').replace('eur', 'eur/');
+  // Crypto
+  if (t === 'btc-usd') return 'btcusd';
+  if (t === 'eth-usd') return 'ethusd';
+  if (t === 'sol-usd') return 'solusd';
+  // Default — try as-is
+  return t;
+}
+
+async function tryYahoo(key) {
+  const yk = normalizeYahooTicker(key);
+  const proxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+  ];
+  for (const proxy of proxies) {
+    try {
+      const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yk) + '?interval=1d&range=1d';
+      const res = await fetch(proxy + encodeURIComponent(url));
+      if (!res.ok) continue;
+      const json = await res.json();
+      const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (price && price > 0) return price;
+    } catch(e) {}
+  }
+  return null;
+}
+
+async function tryStooq(key) {
+  const sk = toStooqTicker(key);
+  try {
+    const url = 'https://stooq.com/q/l/?s=' + encodeURIComponent(sk) + '&f=sd2t2ohlcv&h&e=csv';
+    const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    const res = await fetch(proxy);
+    if (!res.ok) return null;
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    if (lines.length > 1) {
+      const parts = lines[1].split(',');
+      const price = parseFloat(parts[4]); // close
+      if (price > 0 && !isNaN(price)) return price;
+    }
+  } catch(e) {}
+  // Try also with original ticker as-is (sometimes works for ETFs)
+  if (sk !== key.toLowerCase()) {
+    try {
+      const url = 'https://stooq.com/q/l/?s=' + encodeURIComponent(key.toLowerCase()) + '&f=sd2t2ohlcv&h&e=csv';
+      const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+      if (res.ok) {
+        const text = await res.text();
+        const lines = text.trim().split('\n');
+        if (lines.length > 1) {
+          const p = parseFloat(lines[1].split(',')[4]);
+          if (p > 0 && !isNaN(p)) return p;
+        }
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+async function tryRss2JsonQuote(key) {
+  // Open Finance API via rss2json as fallback for ETFs
+  try {
+    // Use Yahoo Finance quote summary endpoint
+    const url = 'https://query2.finance.yahoo.com/v10/finance/quoteSummary/' + encodeURIComponent(normalizeYahooTicker(key)) + '?modules=price';
+    const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    const res = await fetch(proxy);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const price = json?.quoteSummary?.result?.[0]?.price?.regularMarketPrice?.raw;
+    if (price && price > 0) return price;
+  } catch(e) {}
+  return null;
+}
+
+async function fetchRealPrice(ticker) {
+  const key = ticker.toUpperCase();
+  if (priceCache[key] && Date.now() - priceCache[key].ts < 120000) return priceCache[key].price;
+
+  // Try sources in order
+  let price = null;
+  price = await tryYahoo(key);
+  if (!price) price = await tryStooq(key);
+  if (!price) price = await tryRss2JsonQuote(key);
+
+  if (price && price > 0) {
+    priceCache[key] = { price, ts: Date.now() };
+    return price;
+  }
+  return null;
+}
+
+async function renderPortfolio() {
+  const countEl = document.getElementById('pf-count');
+  if (countEl) countEl.textContent = pf.length;
   if (!pf.length) {
-    show('pf-empty'); hide('pf-table');
-    ['pf-total-val','pf-total-cost','pf-pnl','pf-pnl-pct','pf-best','pf-best-pct'].forEach(id=>setText(id,'—'));
+    document.getElementById('pf-empty')?.classList.remove('hidden');
+    document.getElementById('pf-table')?.classList.add('hidden');
+    ['pf-total-val','pf-total-cost','pf-pnl','pf-pnl-pct','pf-pnl-local','pf-val-local','pf-best','pf-best-pct'].forEach(id => {
+      const e=document.getElementById(id); if(e) e.textContent='—';
+    });
     return;
   }
-  hide('pf-empty'); show('pf-table');
-  let tv=0,tc=0,bestP=-Infinity,bestT='';
-  const rows = pf.map(p => {
-    const cp=simPrice(p.ticker), val=p.shares*cp, cost=p.shares*p.buyPrice;
-    const pnl=val-cost, pct=(pnl/cost)*100;
-    tv+=val; tc+=cost;
-    if(pct>bestP){bestP=pct;bestT=p.ticker;}
-    const col=pnl>=0?'var(--gn)':'var(--rd)';
-    const sg=pnl>=0?'+':'';
-    return `<tr>
-      <td><strong style="font-family:Syne">${esc(p.ticker)}</strong></td>
-      <td>${p.shares}</td>
-      <td>$${p.buyPrice.toFixed(2)}</td>
-      <td style="color:var(--ac)">$${cp.toFixed(2)}</td>
-      <td>$${val.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
-      <td style="color:${col}">${sg}$${Math.abs(pnl).toLocaleString('en-US',{maximumFractionDigits:0})}</td>
-      <td style="color:${col};font-weight:600">${sg}${pct.toFixed(2)}%</td>
-      <td style="color:var(--t2);font-size:12px">${esc(p.note||'—')}</td>
-      <td><button class="btn b-danger" style="padding:3px 8px;font-size:11px" onclick="removePos(${p.id})">✕</button></td>
-    </tr>`;
+  document.getElementById('pf-empty')?.classList.add('hidden');
+  document.getElementById('pf-table')?.classList.remove('hidden');
+  const cur = currentCurrency;
+  const rate = usdToLocal;
+  const curSym = { USD:'$', EUR:'€', GBP:'£', JPY:'¥', CZK:'Kč', CHF:'Fr.' }[cur] || cur;
+
+  // Skeleton rows
+  document.getElementById('pf-tbody').innerHTML = pf.map(p =>
+    '<tr id="pfrow-' + p.id + '">' +
+    '<td><strong style="font-family:\'Syne\',sans-serif;font-size:13px">' + esc(p.ticker) + '</strong>' +
+    (p.note ? '<div style="font-size:10px;color:var(--t2)">' + esc(p.note) + '</div>' : '') +
+    '<a href="https://finance.yahoo.com/quote/' + encodeURIComponent(p.ticker) + '" target="_blank" style="font-size:10px;color:var(--ac);font-family:\'DM Mono\',monospace;text-decoration:none">↗ Yahoo</a></td>' +
+    '<td class="mono">' + p.shares + '</td>' +
+    '<td class="mono">' + p.buyPrice.toFixed(2) + ' ' + (p.buyCurrency||'USD') + '</td>' +
+    '<td class="mono" style="color:var(--t2)"><div class="spin" style="width:10px;height:10px;border-width:1.5px;display:inline-block"></div></td>' +
+    '<td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td>' +
+    '<td style="color:var(--t2);font-size:12px">' + esc(p.note||'') + '</td>' +
+    '<td><button class="btn b-danger" style="padding:3px 7px;font-size:11px" onclick="removePos(' + p.id + ')">✕</button></td>' +
+    '</tr>'
+  ).join('');
+
+  const prices = await Promise.all(pf.map(p => fetchRealPrice(p.ticker)));
+
+  let tv=0, tc=0, bestP=-Infinity, bestT='';
+  pf.forEach((p,i) => {
+    const cp = prices[i];
+    const row = document.getElementById('pfrow-' + p.id);
+    if (!row) return;
+
+    // Convert buy price to USD
+    let buyUSD = p.buyPrice;
+    if ((p.buyCurrency||'USD') !== 'USD') {
+      // Use current rate as approximation for conversion
+      const bRate = CURRENCY_TICKERS[p.buyCurrency||'USD'];
+      if (p.buyCurrency === 'CZK') buyUSD = p.buyPrice / rate;
+      else if (p.buyCurrency === 'EUR') buyUSD = p.buyPrice / 0.93;
+      else if (p.buyCurrency === 'GBP') buyUSD = p.buyPrice / 0.79;
+    }
+    const cost = p.shares * buyUSD;
+    tc += cost;
+
+    const tds = row.querySelectorAll('td');
+    if (cp !== null) {
+      const val = p.shares * cp;
+      const pnl = val - cost;
+      const pct = (pnl / cost) * 100;
+      const pnlLocal = pnl * rate;
+      const valLocal = val * rate;
+      tv += val;
+      if (pct > bestP) { bestP=pct; bestT=p.ticker; }
+      const col = pnl>=0?'var(--gn)':'var(--rd)';
+      const sg  = pnl>=0?'+':'';
+      tds[3].innerHTML = '<span style="color:var(--ac)">$' + cp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</span>';
+      tds[4].textContent = '$' + val.toLocaleString('en-US',{maximumFractionDigits:0});
+      tds[5].innerHTML = '<span style="color:' + col + '">' + sg + '$' + Math.abs(pnl).toLocaleString('en-US',{maximumFractionDigits:0}) + '</span>';
+      tds[6].innerHTML = '<span style="color:' + col + ';font-weight:600">' + sg + pct.toFixed(2) + '%</span>';
+      tds[7].innerHTML = '<span style="color:' + col + '">' + sg + pnlLocal.toLocaleString('cs-CZ',{maximumFractionDigits:0}) + ' ' + curSym + '</span>';
+    } else {
+      tds[3].innerHTML = '<span style="color:var(--t3);font-size:11px">N/A</span>';
+      tds[4].textContent='—'; tds[5].textContent='—'; tds[6].textContent='—'; tds[7].textContent='—';
+    }
   });
-  $('pf-tbody').innerHTML = rows.join('');
-  const tp=tv-tc, tpPct=(tp/tc)*100, col=tp>=0?'var(--gn)':'var(--rd)', sg=tp>=0?'+':'';
-  setText('pf-total-val','$'+tv.toLocaleString('en-US',{maximumFractionDigits:0}));
-  setText('pf-total-cost','$'+tc.toLocaleString('en-US',{maximumFractionDigits:0}));
-  $('pf-pnl').textContent=sg+'$'+Math.abs(tp).toLocaleString('en-US',{maximumFractionDigits:0});
-  $('pf-pnl').style.color=col;
-  $('pf-pnl-pct').textContent=sg+tpPct.toFixed(2)+'%';
-  $('pf-pnl-pct').style.color=col;
-  setText('pf-best',bestT||'—');
-  $('pf-best-pct').textContent=bestP>-Infinity?(bestP>=0?'+':'')+bestP.toFixed(2)+'%':'—';
+
+  const tp = tv-tc, tpPct = tc>0?(tp/tc)*100:0;
+  const col = tp>=0?'var(--gn)':'var(--rd)', sg=tp>=0?'+':'';
+  const tpLocal = tp * rate, tvLocal = tv * rate;
+  const tvEl=document.getElementById('pf-total-val'); if(tvEl) tvEl.textContent='$'+tv.toLocaleString('en-US',{maximumFractionDigits:0});
+  const tcEl=document.getElementById('pf-total-cost'); if(tcEl) tcEl.textContent='$'+tc.toLocaleString('en-US',{maximumFractionDigits:0});
+  const pnlEl=document.getElementById('pf-pnl'); if(pnlEl){pnlEl.textContent=sg+'$'+Math.abs(tp).toLocaleString('en-US',{maximumFractionDigits:0});pnlEl.style.color=col;}
+  const pctEl=document.getElementById('pf-pnl-pct'); if(pctEl){pctEl.textContent=sg+tpPct.toFixed(2)+'%';pctEl.style.color=col;}
+  const locEl=document.getElementById('pf-pnl-local'); if(locEl){locEl.textContent=sg+tpLocal.toLocaleString('cs-CZ',{maximumFractionDigits:0})+' '+curSym;locEl.style.color=col;}
+  const valLocEl=document.getElementById('pf-val-local'); if(valLocEl) valLocEl.textContent='Hodnota: '+tvLocal.toLocaleString('cs-CZ',{maximumFractionDigits:0})+' '+curSym;
+  const bestEl=document.getElementById('pf-best'); if(bestEl) bestEl.textContent=bestT||'—';
+  const bestPctEl=document.getElementById('pf-best-pct'); if(bestPctEl) bestPctEl.textContent=bestP>-Infinity?(bestP>=0?'+':'')+bestP.toFixed(2)+'%':'—';
 }
+
+
 
 async function analyzePortfolio() {
   if (!pf.length) { alert('Přidej nejprve pozice.'); return; }
-  $('pf-ai-btn').disabled = true;
-  show('pf-ai-loading');
-  hide('pf-ai-result');
-  hide('pf-ai-hint');
-  const sum = pf.map(p=>{
-    const cp=simPrice(p.ticker), pct=(((cp-p.buyPrice)/p.buyPrice)*100).toFixed(1);
-    return `${p.ticker}: ${p.shares}x @ $${p.buyPrice} (sim. $${cp}, P&L ${pct}%)`;
-  }).join('\n');
+  document.getElementById('pf-ai-btn').disabled = true;
+  show('pf-ai-loading'); hide('pf-ai-result'); hide('pf-ai-hint');
+  const cur = currentCurrency;
+  const sum = pf.map(p => p.ticker + ': ' + p.shares + 'x @ ' + p.buyPrice + ' ' + (p.buyCurrency||'USD') + (p.note?' ('+p.note+')':'')).join('\n');
   try {
-    const text = await callClaude([{
-      role:'user',
-      content:`Analyzuj portfolio:\n${sum}\n\nZahrň: 1) Hodnocení, 2) Diverzifikace, 3) Koncentrační rizika, 4) Navrhované změny, 5) Chybějící expozice, 6) Rebalancing.`
-    }], 'Jsi expert na portfolio management. Odpovídej strukturovaně, česky. Nejde o finanční poradenství.');
+    const text = await callClaude([{role:'user',content:'Analyzuj portfolio investora z ČR:\n' + sum + '\n\nDomácí měna: ' + cur + '\n\nZahrň: 1) Hodnocení, 2) Diverzifikace, 3) Koncentrační rizika, 4) Měnové riziko (CZK/USD), 5) Navrhované změny, 6) Rebalancing.'}],
+      'Jsi expert na portfolio management. Odpovídej strukturovaně, česky. Nejde o finanční poradenství.');
     showAI('pf-ai-result', text);
-  } catch(e) {
-    showErr('pf-ai-result', e.message);
-  }
+  } catch(e) { showErr('pf-ai-result', e.message); }
   hide('pf-ai-loading');
-  $('pf-ai-btn').disabled = false;
+  document.getElementById('pf-ai-btn').disabled = false;
+}
+
+// ══════════════════════════════════════════════════
+// MARKET OVERVIEW EDITOR (Dashboard chart)
+// ══════════════════════════════════════════════════
+const OV_DEFAULT = [
+  {title:'Indexy', symbols:[{s:'FOREXCOM:SPXUSD',d:'S&P 500'},{s:'FOREXCOM:NSXUSD',d:'Nasdaq 100'},{s:'INDEX:DEU40',d:'DAX'},{s:'CBOE:VIX',d:'VIX'},{s:'TVC:DXY',d:'DXY'}]},
+  {title:'Komodity', symbols:[{s:'TVC:GOLD',d:'Gold'},{s:'TVC:SILVER',d:'Silver'},{s:'TVC:USOIL',d:'WTI Oil'},{s:'TVC:UKOIL',d:'Brent'},{s:'COMEX:HG1!',d:'Copper'}]},
+  {title:'Crypto', symbols:[{s:'BITSTAMP:BTCUSD',d:'Bitcoin'},{s:'BITSTAMP:ETHUSD',d:'Ethereum'},{s:'BINANCE:SOLUSDT',d:'Solana'},{s:'BINANCE:XRPUSDT',d:'XRP'}]},
+  {title:'Forex', symbols:[{s:'FX:EURUSD',d:'EUR/USD'},{s:'FX:GBPUSD',d:'GBP/USD'},{s:'FX:USDJPY',d:'USD/JPY'},{s:'FX:USDCZK',d:'USD/CZK'}]}
+];
+let ovTabs = JSON.parse(localStorage.getItem('iq_ov') || 'null') || OV_DEFAULT.map(t => ({...t, symbols:[...t.symbols]}));
+
+function openOverviewEdit() {
+  document.getElementById('ov-modal').style.display = 'flex';
+  renderOvTabs();
+}
+function closeOverviewEdit() { document.getElementById('ov-modal').style.display = 'none'; }
+function resetOverviewDefault() { ovTabs = OV_DEFAULT.map(t => ({...t, symbols:[...t.symbols]})); localStorage.removeItem('iq_ov'); renderOvTabs(); }
+
+function renderOvTabs() {
+  // Populate tab selector
+  const sel = document.getElementById('ov-tab-sel');
+  sel.innerHTML = ovTabs.map((t,i) => '<option value="' + i + '">' + esc(t.title) + '</option>').join('');
+
+  // Render tab list
+  document.getElementById('ov-tabs-list').innerHTML = ovTabs.map((tab,ti) =>
+    '<div style="margin-bottom:10px;padding:10px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">' +
+    '<span style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px">' + esc(tab.title) + '</span>' +
+    '<button onclick="removeOvTab(' + ti + ')" style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--rd);border-radius:5px;padding:2px 8px;cursor:pointer;font-size:11px">✕ Tab</button>' +
+    '</div>' +
+    tab.symbols.map((sym,si) =>
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(37,45,58,.3)">' +
+      '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--ac)">' + esc(sym.s) + '</span>' +
+      '<span style="font-size:11px;color:var(--t2)">' + esc(sym.d) + '</span>' +
+      '<button onclick="removeOvSym(' + ti + ',' + si + ')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 4px">✕</button>' +
+      '</div>'
+    ).join('') +
+    '</div>'
+  ).join('');
+}
+
+function addOverviewTab() {
+  const name = (document.getElementById('ov-tab-name').value||'').trim();
+  if (!name) return;
+  ovTabs.push({title: name, symbols: []});
+  document.getElementById('ov-tab-name').value = '';
+  renderOvTabs();
+}
+function removeOvTab(ti) { ovTabs.splice(ti,1); renderOvTabs(); }
+function addOverviewSym() {
+  const s = (document.getElementById('ov-sym').value||'').trim().toUpperCase();
+  const d = (document.getElementById('ov-sym-lbl').value||'').trim() || s;
+  const ti = parseInt(document.getElementById('ov-tab-sel').value);
+  if (!s || isNaN(ti) || !ovTabs[ti]) return;
+  ovTabs[ti].symbols.push({s, d});
+  document.getElementById('ov-sym').value='';
+  document.getElementById('ov-sym-lbl').value='';
+  renderOvTabs();
+}
+function removeOvSym(ti, si) { ovTabs[ti].symbols.splice(si,1); renderOvTabs(); }
+
+function applyOverviewEdit() {
+  localStorage.setItem('iq_ov', JSON.stringify(ovTabs));
+  closeOverviewEdit();
+  rebuildOverviewWidget();
+}
+function rebuildOverviewWidget() {
+  const wrap = document.getElementById('overview-widget-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
+  const s = document.createElement('script');
+  s.async = true;
+  s.type = 'text/javascript';
+  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
+  s.text = JSON.stringify({
+    colorTheme:'dark', dateRange:'3M', showChart:true, locale:'cs',
+    isTransparent:true, showSymbolLogo:true, width:'100%', height:'420',
+    tabs: ovTabs.map(t => ({title:t.title, symbols:t.symbols.map(sym => ({s:sym.s,d:sym.d}))}))
+  });
+  wrap.appendChild(s);
+}
+
+// On load — apply saved overview if exists
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('iq_ov');
+  if (saved) { try { ovTabs = JSON.parse(saved); rebuildOverviewWidget(); } catch(e){} }
+}, {once:true});
+
+// ══════════════════════════════════════════════════
+// TICKER TAPE EDITOR
+// ══════════════════════════════════════════════════
+const TICKER_DEFAULT = [
+  {proName:'FOREXCOM:SPXUSD',title:'S&P 500'},{proName:'FOREXCOM:NSXUSD',title:'Nasdaq'},
+  {proName:'CBOE:VIX',title:'VIX'},{proName:'TVC:US10Y',title:'10Y Yield'},
+  {proName:'TVC:GOLD',title:'Gold'},{proName:'TVC:SILVER',title:'Silver'},
+  {proName:'TVC:USOIL',title:'WTI Oil'},{proName:'TVC:NGAS',title:'Nat. Gas'},
+  {proName:'BITSTAMP:BTCUSD',title:'Bitcoin'},{proName:'BITSTAMP:ETHUSD',title:'Ethereum'},
+  {proName:'FX:EURUSD',title:'EUR/USD'},{proName:'FX:USDCZK',title:'USD/CZK'},
+  {proName:'TVC:DXY',title:'DXY'},{proName:'COMEX:HG1!',title:'Copper'},{proName:'TVC:UKOIL',title:'Brent'}
+];
+let tickerSyms = JSON.parse(localStorage.getItem('iq_ticker') || 'null') || TICKER_DEFAULT;
+
+function openTickerEdit() {
+  document.getElementById('ticker-modal').style.display = 'flex';
+  renderTickerEditList();
+}
+function closeTickerEdit() { document.getElementById('ticker-modal').style.display = 'none'; }
+function resetTickerDefault() { tickerSyms = [...TICKER_DEFAULT]; localStorage.removeItem('iq_ticker'); renderTickerEditList(); }
+function renderTickerEditList() {
+  document.getElementById('ticker-edit-list').innerHTML = tickerSyms.map((s,i) =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd)">' +
+    '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--ac)">' + esc(s.proName) + '</span>' +
+    '<span style="font-size:11px;color:var(--t2)">' + esc(s.title) + '</span>' +
+    '<button onclick="removeTickerSym(' + i + ')" style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--rd);border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+function addTickerSym() {
+  const sym = (document.getElementById('ticker-sym-inp').value||'').trim().toUpperCase();
+  const lbl = (document.getElementById('ticker-lbl-inp').value||'').trim() || sym;
+  if (!sym) return;
+  tickerSyms.push({proName: sym, title: lbl});
+  document.getElementById('ticker-sym-inp').value='';
+  document.getElementById('ticker-lbl-inp').value='';
+  renderTickerEditList();
+}
+function removeTickerSym(i) { tickerSyms.splice(i,1); renderTickerEditList(); }
+function applyTickerEdit() {
+  localStorage.setItem('iq_ticker', JSON.stringify(tickerSyms));
+  closeTickerEdit();
+  // Rebuild ticker widget
+  const wrap = document.getElementById('ticker-tv');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
+  s.text = JSON.stringify({symbols: tickerSyms, showSymbolLogo:true, isTransparent:true, displayMode:'adaptive', colorTheme:'dark', locale:'cs'});
+  wrap.appendChild(s);
+}
+
+// ══════════════════════════════════════════════════
+// FX TABLE EDITOR
+// ══════════════════════════════════════════════════
+const FX_DEFAULT = [
+  { ticker:'EURUSD=X',  label:'EUR / USD',    cat:'Forex',    flag:'🇪🇺' },
+  { ticker:'GBPUSD=X',  label:'GBP / USD',    cat:'Forex',    flag:'🇬🇧' },
+  { ticker:'USDJPY=X',  label:'USD / JPY',    cat:'Forex',    flag:'🇯🇵' },
+  { ticker:'USDCZK=X',  label:'USD / CZK',    cat:'Forex',    flag:'🇨🇿' },
+  { ticker:'USDCHF=X',  label:'USD / CHF',    cat:'Forex',    flag:'🇨🇭' },
+  { ticker:'AUDUSD=X',  label:'AUD / USD',    cat:'Forex',    flag:'🇦🇺' },
+  { ticker:'GC=F',      label:'Gold',          cat:'Komodity', flag:'🥇' },
+  { ticker:'SI=F',      label:'Silver',        cat:'Komodity', flag:'🥈' },
+  { ticker:'CL=F',      label:'WTI Oil',       cat:'Komodity', flag:'🛢️' },
+  { ticker:'BZ=F',      label:'Brent Oil',     cat:'Komodity', flag:'🛢️' },
+  { ticker:'NG=F',      label:'Nat. Gas',      cat:'Komodity', flag:'🔥' },
+  { ticker:'HG=F',      label:'Copper',        cat:'Komodity', flag:'🔶' },
+  { ticker:'PL=F',      label:'Platinum',      cat:'Komodity', flag:'⬜' },
+  { ticker:'BTC-USD',   label:'Bitcoin',       cat:'Crypto',   flag:'₿' },
+  { ticker:'ETH-USD',   label:'Ethereum',      cat:'Crypto',   flag:'Ξ' },
+  { ticker:'SOL-USD',   label:'Solana',        cat:'Crypto',   flag:'◎' },
+];
+let fxSymbols = JSON.parse(localStorage.getItem('iq_fx') || 'null') || FX_DEFAULT;
+
+function openFxEdit() { document.getElementById('fx-edit').classList.remove('hidden'); renderFxEditList(); }
+function closeFxEdit() { document.getElementById('fx-edit').classList.add('hidden'); }
+function renderFxEditList() {
+  document.getElementById('fx-edit-list').innerHTML = fxSymbols.map((s,i) =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd)">' +
+    '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--ac)">' + esc(s.ticker) + '</span>' +
+    '<span style="font-size:11px;color:var(--t2)">' + esc(s.label) + '</span>' +
+    '<span style="font-size:10px;color:var(--t3)">' + esc(s.cat) + '</span>' +
+    '<button onclick="removeFxItem(' + i + ')" style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--rd);border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+function addFxItem() {
+  const tk  = (document.getElementById('fx-inp').value||'').trim().toUpperCase();
+  const lb  = (document.getElementById('fx-lbl').value||'').trim() || tk;
+  const cat = document.getElementById('fx-cat').value;
+  if (!tk) return;
+  const flags = {Komodity:'📦',Forex:'💱',Crypto:'🔮',Akcie:'📈'};
+  fxSymbols.push({ticker:tk, label:lb, cat, flag:flags[cat]||'📦'});
+  localStorage.setItem('iq_fx', JSON.stringify(fxSymbols));
+  document.getElementById('fx-inp').value='';
+  document.getElementById('fx-lbl').value='';
+  renderFxEditList();
+  loadFxTable();
+}
+function removeFxItem(i) {
+  fxSymbols.splice(i,1);
+  localStorage.setItem('iq_fx', JSON.stringify(fxSymbols));
+  renderFxEditList();
+  loadFxTable();
 }
 
 // ══════════════════════════════════════════════════
@@ -905,7 +1779,11 @@ async function loadEdu(topic, desc) {
     const text = await callClaude([{role:'user',content:`Vzdělávací materiál: "${topic}". Kontext: ${desc}. Zahrň: pojmy, příklady s čísly, využití v praxi, chyby začátečníků, doporučené kroky.`}],
       'Jsi finanční vzdělávatel. Vysvětluj s příklady a čísly. Piš česky.');
     showAI('edu-content', text);
-  } catch(e) { showErr('edu-content', e.message); }
+  } catch(e) {
+    showErr('edu-content', e.message.includes('fetch') 
+      ? 'Chyba připojení k serveru. Ujisti se, že aplikace běží na Vercelu (ne lokálně) a API klíč je nastaven v Environment Variables.'
+      : e.message);
+  }
   hide('edu-load');
 }
 
