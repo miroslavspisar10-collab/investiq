@@ -1,0 +1,2859 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InvestIQ — Investiční platforma</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070a0f;--s1:#0d1117;--s2:#161b24;--s3:#1e2530;--bd:#252d3a;
+  --ac:#00d4ff;--gn:#00ff88;--rd:#ff4757;--or:#ff6b35;--pu:#c084fc;
+  --tx:#e8edf5;--t2:#8899aa;--t3:#4a5568;
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.hdr{background:var(--s1);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:200}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;gap:10px;flex-wrap:wrap}
+.logo{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.logo-dot{width:8px;height:8px;background:var(--ac);border-radius:50%;box-shadow:0 0 10px var(--ac);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nb{padding:7px 12px;border:none;border-radius:8px;background:transparent;color:var(--t2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.nb:hover{background:var(--s2);color:var(--tx)}
+.nb.on{background:var(--s3);color:var(--ac)}
+
+/* API KEY BAR */
+.apibar{background:var(--s2);border-bottom:1px solid var(--bd);padding:7px 20px;display:flex;align-items:center;gap:10px;font-size:12px}
+.apibar-label{color:var(--t2);white-space:nowrap;font-family:'DM Mono',monospace;font-size:11px}
+.apibar input{background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:5px 12px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:340px;transition:border-color .2s}
+.apibar input:focus{border-color:var(--ac)}
+.api-status{font-size:11px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:20px}
+.api-status.ok{background:rgba(0,255,136,.1);color:var(--gn);border:1px solid rgba(0,255,136,.2)}
+.api-status.err{background:rgba(255,71,87,.1);color:var(--rd);border:1px solid rgba(255,71,87,.2)}
+.api-status.empty{background:rgba(255,107,53,.1);color:var(--or);border:1px solid rgba(255,107,53,.2)}
+
+.ticker-bar{height:46px;border-top:1px solid var(--bd);overflow:hidden}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;white-space:nowrap}
+.live-dot{width:6px;height:6px;background:var(--gn);border-radius:50%;box-shadow:0 0 7px var(--gn);animation:pulse .9s infinite}
+
+.page{display:none;padding:20px 22px}
+.page.on{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.g4,.g2,.g3{grid-template-columns:1fr}}
+
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:13px;padding:16px;overflow:hidden}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.ct{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--t2)}
+
+.bdg{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.7px}
+.b-bl{background:rgba(0,212,255,.1);color:var(--ac);border:1px solid rgba(0,212,255,.2)}
+.b-gn{background:rgba(0,255,136,.1);color:var(--gn);border:1px solid rgba(0,255,136,.2)}
+.b-rd{background:rgba(255,71,87,.1);color:var(--rd);border:1px solid rgba(255,71,87,.2)}
+.b-pu{background:rgba(192,132,252,.1);color:var(--pu);border:1px solid rgba(192,132,252,.2)}
+.b-or{background:rgba(255,107,53,.1);color:var(--or);border:1px solid rgba(255,107,53,.2)}
+
+.stitle{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.stitle::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+.btn{padding:8px 15px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.bp{background:var(--ac);color:#000}
+.bp:hover:not(:disabled){background:#00b5d8;transform:translateY(-1px)}
+.bp:disabled{opacity:.4;cursor:not-allowed}
+.bs{background:var(--s2);color:var(--tx);border:1px solid var(--bd)}
+.bs:hover:not(:disabled){background:var(--s3)}
+.bs:disabled{opacity:.4;cursor:not-allowed}
+.b-danger{background:rgba(255,71,87,.1);color:var(--rd);border:1px solid rgba(255,71,87,.2)}
+.b-danger:hover{background:rgba(255,71,87,.2)}
+
+.inp{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px 13px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s;width:100%}
+.inp:focus{border-color:var(--ac)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.opp{background:var(--s2);border-radius:10px;padding:12px;border-left:3px solid;margin-bottom:8px;transition:transform .15s}
+.opp:hover{transform:translateX(3px)}
+.opp.lng{border-color:var(--gn)}.opp.sht{border-color:var(--rd)}
+.opp-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.opp-tk{font-family:'Syne',sans-serif;font-size:15px;font-weight:800}
+.opp-d{font-size:12px;color:var(--t2);line-height:1.5}
+
+.ni{padding:10px 0;border-bottom:1px solid var(--bd);cursor:pointer;transition:padding .12s}
+.ni:last-child{border-bottom:none}
+.ni:hover{padding-left:5px}
+.ni-t{font-size:13px;font-weight:500;margin-bottom:4px;line-height:1.5}
+.ni-m{display:flex;gap:8px;font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;align-items:center;flex-wrap:wrap}
+
+.aibox{background:var(--s2);border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:15px;font-size:13px;line-height:1.7;white-space:pre-wrap;margin-top:12px;position:relative;max-height:420px;overflow-y:auto}
+.aibox::before{content:'AI ANALÝZA';position:absolute;top:-9px;left:13px;font-size:9px;font-family:'DM Mono',monospace;font-weight:700;color:var(--ac);background:var(--s2);padding:0 7px;letter-spacing:1px}
+
+.chat-wrap{max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:11px}
+.msg{padding:10px 13px;border-radius:10px;font-size:13px;line-height:1.6;max-width:88%}
+.msg.u{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);align-self:flex-end;margin-left:auto}
+.msg.a{background:var(--s2);border:1px solid var(--bd);white-space:pre-wrap}
+
+.spin-row{display:flex;align-items:center;gap:8px;color:var(--t2);font-size:13px;padding:10px 0}
+.spin{width:14px;height:14px;border:2px solid var(--s3);border-top-color:var(--ac);border-radius:50%;animation:sp .8s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.tabs{display:flex;gap:3px;margin-bottom:13px;background:var(--s2);border-radius:8px;padding:3px;width:fit-content}
+.tab{padding:6px 12px;border-radius:6px;border:none;background:transparent;color:var(--t2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .2s}
+.tab.on{background:var(--s3);color:var(--tx)}
+
+.edu-card{background:var(--s2);border-radius:10px;padding:17px;cursor:pointer;transition:all .2s;border:1px solid transparent}
+.edu-card:hover{border-color:var(--ac);transform:translateY(-2px)}
+
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'DM Mono',monospace}
+.tbl td{padding:10px 10px;font-size:13px;border-bottom:1px solid rgba(37,45,58,.4);font-family:'DM Sans',sans-serif;vertical-align:middle}
+.tbl td.mono{font-family:'DM Mono',monospace}
+/* TradingView screener widget font override */
+.tv-screener-table__cell{font-family:'DM Mono',monospace!important}
+.tv-screener-table__head-left{font-family:'Syne',sans-serif!important}
+.tbl tr:hover td{background:var(--s2);cursor:pointer}
+
+.pf-stat{background:var(--s2);border-radius:10px;padding:13px 15px;border-left:3px solid var(--ac)}
+.pf-stat-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace;margin-bottom:4px}
+.pf-stat-value{font-family:'Syne',sans-serif;font-size:21px;font-weight:800}
+.pf-stat-sub{font-size:11px;font-family:'DM Mono',monospace;margin-top:3px}
+
+.src-tab{padding:5px 11px;border-radius:6px;border:1px solid var(--bd);background:transparent;color:var(--t2);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s}
+.src-tab:hover{background:var(--s2);color:var(--tx)}
+.src-tab.on{background:var(--s3);border-color:var(--ac);color:var(--ac)}
+
+.tv-wrap{width:100%;overflow:hidden}
+.col{display:flex;flex-direction:column;gap:15px}
+.hidden{display:none!important}
+.mb3{margin-bottom:11px}.mb4{margin-bottom:15px}.mb6{margin-bottom:20px}.mt3{margin-top:11px}.mt4{margin-top:13px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px}
+.divider{height:1px;background:var(--bd);margin:13px 0}
+
+/* error box */
+.errbox{background:rgba(255,71,87,.07);border:1px solid rgba(255,71,87,.2);border-radius:10px;padding:13px;font-size:13px;color:var(--rd);line-height:1.6}
+.infobox{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:13px;font-size:13px;color:var(--t2);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-top">
+    <div class="logo"><div class="logo-dot"></div>InvestIQ</div>
+    <nav class="nav">
+      <button class="nb on"  onclick="nav('dashboard',this)">📊 Dashboard</button>
+      <button class="nb"     onclick="nav('news',this)">📰 News</button>
+      <button class="nb"     onclick="nav('markets',this)">📈 Trhy</button>
+      <button class="nb"     onclick="nav('charts',this)">🕯️ Grafy</button>
+      <button class="nb"     onclick="nav('screener',this)">🔍 Screener</button>
+      <button class="nb"     onclick="nav('portfolio',this)">💼 Portfolio</button>
+      <button class="nb"     onclick="nav('education',this)">🎓 Vzdělávání</button>
+      <button class="nb"     onclick="nav('testing',this)">🧠 Testy</button>
+      <button class="nb"     onclick="nav('prediction',this)">🔮 Predikce</button>
+      <button class="nb"     onclick="nav('advisor',this)">🤖 AI Poradce</button>
+    </nav>
+    <div class="live-badge"><div class="live-dot"></div>LIVE · TradingView</div>
+  </div>
+
+  <!-- AI status bar - no key needed, proxy handles it -->
+  <div class="apibar">
+    <div class="live-dot" style="width:7px;height:7px;background:var(--gn);border-radius:50%;box-shadow:0 0 7px var(--gn);animation:pulse .9s infinite"></div>
+    <span class="apibar-label" style="color:var(--gn)">AI · Claude aktivní</span>
+    <span style="color:var(--t3);font-size:11px;font-family:'DM Mono',monospace;margin-left:8px">Všechny AI funkce jsou dostupné bez registrace</span>
+  </div>
+
+  <!-- TICKER TAPE + EDIT -->
+  <div class="ticker-bar" style="position:relative">
+    <div id="ticker-wrap" style="height:46px">
+      <div class="tradingview-widget-container" style="height:46px" id="ticker-tv">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+        {"symbols":[
+          {"proName":"FOREXCOM:SPXUSD","title":"S&P 500"},{"proName":"FOREXCOM:NSXUSD","title":"Nasdaq"},
+          {"proName":"CBOE:VIX","title":"VIX"},{"proName":"TVC:US10Y","title":"10Y Yield"},
+          {"proName":"TVC:GOLD","title":"Gold"},{"proName":"TVC:SILVER","title":"Silver"},
+          {"proName":"TVC:USOIL","title":"WTI Oil"},{"proName":"TVC:NGAS","title":"Nat. Gas"},
+          {"proName":"BITSTAMP:BTCUSD","title":"Bitcoin"},{"proName":"BITSTAMP:ETHUSD","title":"Ethereum"},
+          {"proName":"FX:EURUSD","title":"EUR/USD"},{"proName":"FX:USDCZK","title":"USD/CZK"},
+          {"proName":"TVC:DXY","title":"DXY"},{"proName":"COMEX:HG1!","title":"Copper"},
+          {"proName":"TVC:UKOIL","title":"Brent"}
+        ],"showSymbolLogo":true,"isTransparent":true,"displayMode":"adaptive","colorTheme":"dark","locale":"cs"}
+        </script>
+      </div>
+    </div>
+    <button onclick="openTickerEdit()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--ac);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;z-index:10">✏️ Upravit</button>
+  </div>
+
+  <!-- Ticker Edit Modal -->
+  <div id="ticker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
+    <div style="background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:22px;width:560px;max-width:95vw;max-height:80vh;overflow-y:auto">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:14px">✏️ Upravit běžící pásek</div>
+      <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:10px">
+        Použij TradingView formát: <span style="color:var(--ac)">FOREXCOM:SPXUSD</span>, <span style="color:var(--ac)">TVC:GOLD</span>, <span style="color:var(--ac)">BITSTAMP:BTCUSD</span>, <span style="color:var(--ac)">FX:USDCZK</span>
+      </div>
+      <div class="row mb3">
+        <input class="inp" id="ticker-sym-inp" placeholder="TVC:GOLD" style="max-width:200px" onkeydown="if(event.key==='Enter')addTickerSym()"/>
+        <input class="inp" id="ticker-lbl-inp" placeholder="Gold" style="max-width:130px"/>
+        <button class="btn bp" onclick="addTickerSym()" style="font-size:12px">Přidat</button>
+      </div>
+      <div style="font-size:11px;color:var(--t3);font-family:'DM Mono',monospace;margin-bottom:10px">
+        Komodity: TVC:GOLD · TVC:SILVER · TVC:USOIL · TVC:NGAS · COMEX:HG1! · COMEX:PL1! (Platina)<br>
+        Akcie: NASDAQ:AAPL · NYSE:JPM · Indexy: FOREXCOM:SPXUSD · INDEX:DEU40<br>
+        Forex: FX:EURUSD · FX:USDCZK · Crypto: BITSTAMP:BTCUSD · BINANCE:SOLUSDT
+      </div>
+      <div id="ticker-edit-list" style="margin-bottom:14px"></div>
+      <div class="row">
+        <button class="btn bp" onclick="applyTickerEdit()" style="flex:1">✓ Použít změny</button>
+        <button class="btn bs" onclick="closeTickerEdit()">Zrušit</button>
+        <button class="btn b-danger" onclick="resetTickerDefault()">Reset</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<div id="page-dashboard" class="page on">
+  <div class="stitle">Dashboard</div>
+
+  <!-- ROW 1: TradingView market overview — editovatelný -->
+  <div class="card mb6" style="padding:0">
+    <div class="ch" style="padding:14px 16px 0">
+      <div class="ct">Trhy · Live</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div class="bdg b-bl">TradingView LIVE</div>
+        <button onclick="openOverviewEdit()" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--ac);border-radius:6px;padding:3px 9px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace">✏️ Upravit</button>
+      </div>
+    </div>
+    <!-- Overview Edit Modal -->
+    <div id="ov-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center">
+      <div style="background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:22px;width:620px;max-width:96vw;max-height:85vh;overflow-y:auto">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:6px">✏️ Upravit grafy na dashboardu</div>
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:14px">Každý tab má název a seznam symbolů (TradingView formát)</div>
+
+        <div id="ov-tabs-list"></div>
+
+        <div style="margin-top:14px;padding:12px;background:var(--s2);border-radius:9px;border:1px solid var(--bd)">
+          <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Přidat nový tab</div>
+          <div class="row mb2">
+            <input class="inp" id="ov-tab-name" placeholder="Název tabu (např. Energie)" style="max-width:200px"/>
+            <button class="btn bp" onclick="addOverviewTab()" style="font-size:12px">+ Tab</button>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;padding:12px;background:var(--s2);border-radius:9px;border:1px solid var(--bd)">
+          <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Přidat symbol do tabu</div>
+          <div class="row mb2">
+            <input class="inp" id="ov-sym" placeholder="FOREXCOM:SPXUSD" style="max-width:200px" onkeydown="if(event.key==='Enter')addOverviewSym()"/>
+            <input class="inp" id="ov-sym-lbl" placeholder="S&P 500" style="max-width:130px"/>
+            <select id="ov-tab-sel" style="background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none"></select>
+            <button class="btn bp" onclick="addOverviewSym()" style="font-size:12px">+</button>
+          </div>
+          <div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;line-height:1.7">
+            Indexy: FOREXCOM:SPXUSD · FOREXCOM:NSXUSD · INDEX:DEU40 · INDEX:FTSE · CBOE:VIX<br>
+            Akcie: NASDAQ:AAPL · NYSE:JPM · XETR:AIR · LSE:VOD · SWX:ABBN (ABB)<br>
+            Komodity: TVC:GOLD · TVC:SILVER · TVC:USOIL · TVC:NGAS · COMEX:HG1!<br>
+            ETF: AMEX:SPY · AMEX:QQQ · LSE:EUNK · LSE:EIMI · XETR:EXS1<br>
+            Crypto: BITSTAMP:BTCUSD · BITSTAMP:ETHUSD · BINANCE:SOLUSDT<br>
+            Forex: FX:EURUSD · FX:USDCZK · FX:GBPUSD
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <button class="btn bp" onclick="applyOverviewEdit()" style="flex:1">✓ Použít změny</button>
+          <button class="btn bs" onclick="closeOverviewEdit()">Zrušit</button>
+          <button class="btn b-danger" onclick="resetOverviewDefault()">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="tradingview-widget-container tv-wrap" id="overview-widget-wrap">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+      {"colorTheme":"dark","dateRange":"3M","showChart":true,"locale":"cs","isTransparent":true,"showSymbolLogo":true,"width":"100%","height":"420","tabs":[
+        {"title":"Indexy","symbols":[{"s":"FOREXCOM:SPXUSD","d":"S&P 500"},{"s":"FOREXCOM:NSXUSD","d":"Nasdaq 100"},{"s":"INDEX:DEU40","d":"DAX"},{"s":"CBOE:VIX","d":"VIX"},{"s":"TVC:DXY","d":"DXY"}]},
+        {"title":"Komodity","symbols":[{"s":"TVC:GOLD","d":"Gold"},{"s":"TVC:SILVER","d":"Silver"},{"s":"TVC:USOIL","d":"WTI Oil"},{"s":"TVC:UKOIL","d":"Brent"},{"s":"COMEX:HG1!","d":"Copper"}]},
+        {"title":"Crypto","symbols":[{"s":"BITSTAMP:BTCUSD","d":"Bitcoin"},{"s":"BITSTAMP:ETHUSD","d":"Ethereum"},{"s":"BINANCE:SOLUSDT","d":"Solana"},{"s":"BINANCE:XRPUSDT","d":"XRP"}]},
+        {"title":"Forex","symbols":[{"s":"FX:EURUSD","d":"EUR/USD"},{"s":"FX:GBPUSD","d":"GBP/USD"},{"s":"FX:USDJPY","d":"USD/JPY"},{"s":"FX:USDCZK","d":"USD/CZK"}]}
+      ]}
+      </script>
+    </div>
+  </div>
+
+  <!-- ROW 2: Watchlist + AI + News -->
+  <div class="g2 mb6">
+
+    <!-- WATCHLIST — plně editovatelný -->
+    <div class="card">
+      <div class="ch">
+        <div class="ct">⭐ Moje watchlist</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn bs" style="font-size:11px;padding:4px 10px" id="wl-refresh-btn" onclick="refreshWatchlist()">↻ Refresh</button>
+          <button class="btn bp" style="font-size:11px;padding:4px 10px" onclick="openWlEdit()">✏️ Upravit</button>
+        </div>
+      </div>
+      <!-- Edit panel (skrytý) -->
+      <div id="wl-edit" class="hidden" style="margin-bottom:12px;padding:12px;background:var(--s2);border-radius:9px;border:1px solid var(--bd)">
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">Přidat symbol</div>
+        <div class="row mb3">
+          <input class="inp" id="wl-inp" placeholder="AAPL, MSFT, GC=F, BTC-USD, EURUSD=X, VOD.L ..." style="max-width:280px" onkeydown="if(event.key==='Enter')addWlItem()"/>
+          <input class="inp" id="wl-label" placeholder="Název (volitelný)" style="max-width:160px"/>
+          <button class="btn bp" onclick="addWlItem()" style="font-size:12px">Přidat</button>
+        </div>
+        <div style="font-size:11px;color:var(--t3);font-family:'DM Mono',monospace;margin-bottom:8px">
+          US akcie: AAPL · Evropa: VOD.L, AIR.PA, BMW.DE · Crypto: BTC-USD · Forex: EURUSD=X · Komodity: GC=F (Gold), CL=F (Oil)
+        </div>
+        <div id="wl-edit-list"></div>
+        <button class="btn bs" onclick="closeWlEdit()" style="margin-top:8px;width:100%">Zavřít</button>
+      </div>
+      <div id="wl-loading" class="spin-row hidden"><div class="spin"></div>Načítám ceny...</div>
+      <div id="wl-table"></div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <div class="ch">
+          <div class="ct">🎯 AI Příležitosti z news</div>
+          <button class="btn bp" id="gen-opps-btn" onclick="generateOpportunities()" style="font-size:11px;padding:5px 11px">⚡ Generovat</button>
+        </div>
+        <div id="opps-loading" class="spin-row hidden"><div class="spin"></div>AI analyzuje zprávy...</div>
+        <div id="opps-container">
+          <div class="infobox">Klikni "Generovat" — AI přečte aktuální zprávy a navrhne LONG/SHORT příležitosti.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">
+          <div class="ct">📰 Nejnovější zprávy</div>
+          <button class="btn bs" style="font-size:11px;padding:5px 10px" onclick="nav('news',document.querySelectorAll('.nb')[1])">Vše →</button>
+        </div>
+        <div id="dash-news"><div class="spin-row"><div class="spin"></div>Načítám zprávy...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ NEWS ══════════════ -->
+<div id="page-news" class="page">
+  <div class="stitle">News & Analýza</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct">Live RSS Zprávy</div><div class="bdg b-bl" id="news-count"></div></div>
+      <div class="row mb3" style="gap:6px">
+        <button class="src-tab on" onclick="loadNews('bloomberg',this)">Bloomberg</button>
+        <button class="src-tab" onclick="loadNews('cnbc',this)">CNBC</button>
+        <button class="src-tab" onclick="loadNews('wsj',this)">WSJ</button>
+        <button class="src-tab" onclick="loadNews('yahoo',this)">Yahoo Finance</button>
+        <button class="src-tab" onclick="loadNews('ft',this)">MarketWatch</button>
+        <button class="src-tab" onclick="loadNews('reuters',this)">Reuters</button>
+      </div>
+      <div id="news-loading" class="spin-row"><div class="spin"></div>Načítám...</div>
+      <div id="news-list"></div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="ch"><div class="ct">🤖 AI analýza zpráv → Příležitosti</div><div class="bdg b-pu">AI</div></div>
+        <p style="font-size:12px;color:var(--t2);margin-bottom:11px;line-height:1.6">Klikni na zprávu vlevo pro rychlou analýzu, nebo analyzuj všechny headlines najednou.</p>
+        <button class="btn bp mb3" id="analyze-all-btn" onclick="analyzeAllNews()">⚡ Analyzovat všechny zprávy</button>
+        <div id="news-ai-loading" class="spin-row hidden"><div class="spin"></div>AI analyzuje headlines...</div>
+        <div id="news-ai-text" class="aibox hidden"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ct">📅 Ekonomický kalendář</div><div class="bdg b-or">Upcoming</div></div>
+        <div class="tradingview-widget-container tv-wrap">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+          {"colorTheme":"dark","isTransparent":true,"width":"100%","height":"320","locale":"cs","importanceFilter":"-1,0,1","countryFilter":"us,eu,gb,jp,cn,cz"}
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MARKETS ══════════════ -->
+<div id="page-markets" class="page">
+  <div class="stitle">Trhy — Live přehled</div>
+
+  <!-- ROW 1: Výnosová křivka + Hotlists -->
+  <div class="g2 mb4">
+    <div class="card" style="padding:0">
+      <div class="ch" style="padding:14px 16px 0"><div class="ct">Nejaktivnější akcie</div><div class="bdg b-bl">LIVE</div></div>
+      <div class="tradingview-widget-container tv-wrap">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-hotlists.js" async>
+        {"colorTheme":"dark","dateRange":"1D","exchange":"US","showChart":true,"locale":"cs","isTransparent":true,"showSymbolLogo":true,"showFloatingTooltip":false,"width":"100%","height":"460","plotLineColorGrowing":"rgba(0,212,255,1)","plotLineColorFalling":"rgba(255,71,87,1)"}
+        </script>
+      </div>
+    </div>
+
+    <!-- VÝNOSOVÁ KŘIVKA -->
+    <div class="card">
+      <div class="ch">
+        <div class="ct">📐 Výnosová křivka USA</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div id="yc-status" class="bdg b-bl">Načítám...</div>
+          <button class="btn bs" style="font-size:11px;padding:4px 9px" onclick="loadYieldCurve()">↻</button>
+        </div>
+      </div>
+      <div id="yc-loading" class="spin-row"><div class="spin"></div>Načítám výnosy...</div>
+      <div id="yc-table"></div>
+      <div id="yc-chart" style="margin-top:12px"></div>
+      <div id="yc-signal" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: FX + Komodity -->
+  <div class="g2 mb4">
+    <div class="card">
+      <div class="ch">
+        <div class="ct">Forex & Komodity</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div id="fx-status" class="bdg b-bl">Načítám...</div>
+          <button class="btn bs" style="font-size:11px;padding:4px 9px" onclick="loadFxTable()">↻</button>
+          <button class="btn bp" style="font-size:11px;padding:4px 9px" onclick="openFxEdit()">✏️ Upravit</button>
+        </div>
+      </div>
+      <!-- FX Edit panel -->
+      <div id="fx-edit" class="hidden" style="margin-bottom:12px;padding:12px;background:var(--s2);border-radius:9px;border:1px solid var(--bd)">
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:7px">Přidat symbol (Yahoo Finance formát)</div>
+        <div class="row mb3">
+          <input class="inp" id="fx-inp" placeholder="GC=F, CL=F, EURUSD=X..." style="max-width:200px" onkeydown="if(event.key==='Enter')addFxItem()"/>
+          <input class="inp" id="fx-lbl" placeholder="Název" style="max-width:120px"/>
+          <select id="fx-cat" style="background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none">
+            <option>Komodity</option><option>Forex</option><option>Crypto</option><option>Akcie</option><option>Dluhopisy</option>
+          </select>
+          <button class="btn bp" onclick="addFxItem()" style="font-size:12px">+</button>
+        </div>
+        <div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-bottom:8px">
+          Gold=GC=F · Silver=SI=F · Oil=CL=F · NatGas=NG=F · Copper=HG=F · VIX=^VIX<br>
+          EUR/USD=EURUSD=X · USD/CZK=USDCZK=X · BTC=BTC-USD · 10Y=^TNX · 2Y=^IRX
+        </div>
+        <div id="fx-edit-list"></div>
+        <button class="btn bs" onclick="closeFxEdit()" style="margin-top:8px;width:100%">Zavřít</button>
+      </div>
+      <div id="fx-loading" class="spin-row"><div class="spin"></div>Načítám live ceny...</div>
+      <div id="fx-table"></div>
+    </div>
+
+    <!-- VIX + Indexy karta -->
+    <div class="card">
+      <div class="ch">
+        <div class="ct">😨 Volatilita & Strach/Chamtivost</div>
+        <div id="vix-status" class="bdg b-bl">Načítám...</div>
+      </div>
+      <div id="vix-loading" class="spin-row"><div class="spin"></div>Načítám...</div>
+      <div id="vix-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CHARTS ══════════════ -->
+<div id="page-charts" class="page">
+  <div class="stitle">Grafy & Analýza</div>
+  <div class="card mb4" style="padding:12px">
+    <div class="row">
+      <input class="inp" id="chart-symbol" value="NASDAQ:AAPL" placeholder="Symbol..." style="max-width:280px" onkeydown="if(event.key==='Enter')applyChart()"/>
+      <button class="btn bp" onclick="applyChart()">Zobrazit</button>
+      <span style="color:var(--t2);font-size:12px">Rychlé:</span>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('NASDAQ:AAPL')">AAPL</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('NASDAQ:NVDA')">NVDA</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('NASDAQ:MSFT')">MSFT</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('NYSE:JPM')">JPM</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('TVC:GOLD')">Gold</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('BITSTAMP:BTCUSD')">BTC</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('FX:EURUSD')">EUR/USD</button>
+      <button class="btn bs" style="font-size:11px" onclick="setChart('TVC:USOIL')">WTI</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" onclick="switchChartTab('chart',this)">📊 Graf</button>
+    <button class="tab"    onclick="switchChartTab('tech',this)">📐 Technická analýza</button>
+    <button class="tab"    onclick="switchChartTab('fund',this)">🏦 Fundamenty</button>
+    <button class="tab"    onclick="switchChartTab('cnews',this)">📰 Zprávy</button>
+  </div>
+  <div class="card" style="padding:0;min-height:520px">
+    <div id="chart-pane"  class="tv-wrap"></div>
+    <div id="tech-pane"   class="tv-wrap hidden"></div>
+    <div id="fund-pane"   class="tv-wrap hidden"></div>
+    <div id="cnews-pane"  class="tv-wrap hidden"></div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREENER ══════════════ -->
+<div id="page-screener" class="page">
+  <div class="stitle">Stock Screener</div>
+  <div class="g2 mb4">
+    <div class="card">
+      <div class="ch"><div class="ct">AI Analýza akcie</div><div class="bdg b-pu">AI</div></div>
+      <div class="row mb3">
+        <input class="inp" id="stock-input" placeholder="Ticker (AAPL, NVDA, MSFT, BTC-USD...)" onkeydown="if(event.key==='Enter')analyzeStock()"/>
+        <button class="btn bp" id="analyze-btn" onclick="analyzeStock()">Analyzovat</button>
+      </div>
+      <div class="row mb3" style="gap:6px">
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('AAPL')">AAPL</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('NVDA')">NVDA</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('MSFT')">MSFT</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('TSLA')">TSLA</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('JPM')">JPM</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('META')">META</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('BRK-B')">BRK-B</button>
+        <button class="btn bs" style="font-size:11px" onclick="setQuickStock('AMZN')">AMZN</button>
+      </div>
+      <div id="stock-loading" class="spin-row hidden"><div class="spin"></div>Analyzuji...</div>
+      <div id="stock-result" class="hidden"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Value Screener — výsledky</div><div class="bdg b-bl">Parametry</div></div>
+      <p style="font-size:12px;color:var(--t2);margin-bottom:12px">MCap &gt;5B · P/E &lt;20 · P/B &lt;2 · PEG &lt;1 · CR ≥1.7 · EPS 5Y &gt;0</p>
+      <table class="tbl">
+        <thead><tr><th>Ticker</th><th>P/E</th><th>P/B</th><th>PEG</th><th>EPS 5Y</th><th>Score</th></tr></thead>
+        <tbody id="screener-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch">
+      <div class="ct">Live Screener — Top akcie</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="sc-status" class="bdg b-bl">Načítám...</div>
+        <button class="btn bs" style="font-size:11px;padding:4px 10px" onclick="loadScreenerTable()">↻ Obnovit</button>
+      </div>
+    </div>
+    <div id="sc-loading" class="spin-row"><div class="spin"></div>Načítám live ceny akcií...</div>
+    <div id="sc-table"></div>
+  </div>
+</div>
+
+<!-- ══════════════ PORTFOLIO ══════════════ -->
+<div id="page-portfolio" class="page">
+  <div class="stitle">Portfolio Tracker</div>
+
+  <!-- Měna & kurz -->
+  <div class="card mb4" style="padding:12px 16px">
+    <div class="row" style="gap:12px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px">Domácí měna:</span>
+        <select id="pf-currency" onchange="onCurrencyChange()" style="background:var(--s2);border:1px solid var(--bd);border-radius:7px;padding:5px 10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none;cursor:pointer">
+          <option value="CZK">🇨🇿 CZK</option>
+          <option value="EUR">🇪🇺 EUR</option>
+          <option value="GBP">🇬🇧 GBP</option>
+          <option value="JPY">🇯🇵 JPY</option>
+          <option value="CHF">🇨🇭 CHF</option>
+          <option value="USD">🇺🇸 USD</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace">Kurz USD/</span>
+        <span id="pf-rate-display" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--ac)">načítám...</span>
+        <button class="btn bs" style="font-size:11px;padding:4px 9px" onclick="fetchExchangeRate()">↻</button>
+      </div>
+      <div style="font-size:11px;color:var(--t3);font-family:'DM Mono',monospace">P&L se zobrazí v USD i v domácí měně</div>
+    </div>
+  </div>
+
+  <div class="g4 mb4">
+    <div class="pf-stat"><div class="pf-stat-label">Hodnota (USD)</div><div class="pf-stat-value" id="pf-total-val">—</div><div class="pf-stat-sub" style="color:var(--t2)">Vloženo: <span id="pf-total-cost">—</span></div></div>
+    <div class="pf-stat" style="border-left-color:var(--gn)"><div class="pf-stat-label">P&L (USD)</div><div class="pf-stat-value" id="pf-pnl">—</div><div class="pf-stat-sub" id="pf-pnl-pct">—</div></div>
+    <div class="pf-stat" style="border-left-color:var(--ac)"><div class="pf-stat-label" id="pf-local-label">P&L (CZK)</div><div class="pf-stat-value" id="pf-pnl-local">—</div><div class="pf-stat-sub" id="pf-val-local" style="color:var(--t2)">Hodnota: —</div></div>
+    <div class="pf-stat" style="border-left-color:var(--pu)"><div class="pf-stat-label">Pozice</div><div class="pf-stat-value" id="pf-count">0</div><div class="pf-stat-sub" style="color:var(--t2)">aktivních</div></div>
+  </div>
+
+  <div class="g2 mb4">
+    <div class="card">
+      <div class="ch"><div class="ct">➕ Přidat pozici</div></div>
+      <div class="col" style="gap:9px">
+        <div>
+          <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Ticker</div>
+          <input class="inp" id="pf-ticker" placeholder="AAPL, VOD.L, BTC-USD, GC=F, AIR.PA..."/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+          <div>
+            <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Počet kusů</div>
+            <input class="inp" id="pf-shares" type="number" placeholder="10" step="any" min="0"/>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Nák. cena</div>
+            <input class="inp" id="pf-price" type="number" placeholder="150.00" step="any" min="0"/>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Měna nákupu</div>
+            <select id="pf-buy-currency" style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px 10px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:100%">
+              <option value="USD">USD</option>
+              <option value="CZK">CZK</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+              <option value="CHF">CHF</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px">Poznámka</div>
+          <input class="inp" id="pf-note" placeholder="Důvod nákupu (volitelně)"/>
+        </div>
+        <div class="row">
+          <button class="btn bp" onclick="addPosition()" style="flex:1">Přidat pozici</button>
+          <button class="btn b-danger" onclick="clearPortfolio()">🗑️ Vymazat vše</button>
+        </div>
+        <div id="pf-msg" class="hidden" style="font-size:12px;font-family:'DM Mono',monospace"></div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">💡 Rychlý import</div>
+      <textarea class="inp" id="pf-import" rows="2" placeholder="AAPL 10 150.00 USD, VOD.L 200 1.50 GBP, BTC-USD 0.5 45000 USD" style="resize:vertical"></textarea>
+      <button class="btn bs mt3" onclick="importPortfolio()" style="width:100%">Importovat</button>
+    </div>
+    <div class="card">
+      <div class="ch">
+        <div class="ct">🤖 AI Analýza portfolia</div>
+        <button class="btn bp" id="pf-ai-btn" onclick="analyzePortfolio()" style="font-size:11px;padding:5px 11px">Analyzovat</button>
+      </div>
+      <div id="pf-ai-loading" class="spin-row hidden"><div class="spin"></div>AI analyzuje...</div>
+      <div id="pf-ai-result" class="hidden"></div>
+      <div id="pf-ai-hint" class="infobox">Přidej pozice a klikni "Analyzovat" — AI zhodnotí diverzifikaci, rizika a navrhne optimalizace.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Moje pozice</div><div class="bdg b-pu">Uloženo v prohlížeči</div></div>
+    <div id="pf-empty" style="color:var(--t3);font-size:13px;padding:16px 0;text-align:center">Zatím žádné pozice. Přidej první pozici výše. 👆</div>
+    <div id="pf-table" class="hidden" style="overflow-x:auto">
+      <table class="tbl" style="min-width:900px">
+        <thead><tr>
+          <th>Ticker</th><th>Množství</th><th>Nák. cena</th><th>Akt. cena</th>
+          <th>Hodnota (USD)</th><th>P&L (USD)</th><th>P&L %</th>
+          <th id="pf-local-col-hdr">P&L (CZK)</th><th>Poznámka</th><th></th>
+        </tr></thead>
+        <tbody id="pf-tbody"></tbody>
+      </table>
+      <p style="font-size:11px;color:var(--t2);margin-top:10px;font-family:'DM Mono',monospace">
+        💡 Ceny: Yahoo Finance + Stooq (EU akcie) · P&L v lokální měně přepočten aktuálním kurzem
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ EDUCATION ══════════════ -->
+<div id="page-education" class="page">
+  <div class="stitle">Vzdělávání</div>
+  <div id="edu-grid" class="g3">
+    <div class="edu-card" onclick="loadEdu('Fundamentální analýza','P/E, P/B, ROE, DCF, earnings quality — jak číst finanční výkazy')"><div style="font-size:26px;margin-bottom:8px">📊</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Fundamentální analýza</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">P/E, P/B, ROE, DCF, earnings quality</div><span class="bdg b-gn">Začátečník</span></div>
+    <div class="edu-card" onclick="loadEdu('Technická analýza','RSI, MACD, Fibonacci, support/resistance, svíčkové vzory')"><div style="font-size:26px;margin-bottom:8px">📈</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Technická analýza</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">RSI, MACD, Fibonacci, S/R, svíčky</div><span class="bdg b-bl">Střední</span></div>
+    <div class="edu-card" onclick="loadEdu('Makroekonomie a investování','Fed policy, inflace, GDP, výnosová křivka, DXY')"><div style="font-size:26px;margin-bottom:8px">🌍</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Makroekonomie</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">Fed, inflace, GDP, výnosová křivka</div><span class="bdg b-bl">Střední</span></div>
+    <div class="edu-card" onclick="loadEdu('Options a Deriváty','Calls, puts, Greeks, spreads, hedging strategie')"><div style="font-size:26px;margin-bottom:8px">⚡</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Options & Deriváty</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">Calls, puts, Greeks, spreads</div><span class="bdg b-pu">Pokročilý</span></div>
+    <div class="edu-card" onclick="loadEdu('Valuace firem','DCF model, comparable companies, EV/EBITDA, sum-of-parts')"><div style="font-size:26px;margin-bottom:8px">🏦</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Valuace firem</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">DCF, EV/EBITDA, comparable</div><span class="bdg b-pu">Pokročilý</span></div>
+    <div class="edu-card" onclick="loadEdu('Risk Management','Position sizing, stop-loss, diverzifikace, VaR, Sharpe ratio')"><div style="font-size:26px;margin-bottom:8px">🛡️</div><div style="font-family:Syne;font-size:14px;font-weight:700;margin-bottom:4px">Risk Management</div><div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:10px">Sizing, stop-loss, VaR, Sharpe</div><span class="bdg b-bl">Střední</span></div>
+  </div>
+  <div id="edu-detail" class="hidden">
+    <div class="mb4"><button class="btn bs" onclick="backEdu()">← Zpět</button></div>
+    <div class="g2">
+      <div class="card"><div class="ch"><div class="ct" id="edu-title">Materiál</div><div class="bdg b-bl">AI</div></div><div id="edu-load" class="spin-row"><div class="spin"></div>Načítám...</div><div id="edu-content" class="aibox hidden"></div></div>
+      <div class="card">
+        <div class="ch"><div class="ct">💬 AI Tutor</div><div class="bdg b-pu">Chat</div></div>
+        <div class="chat-wrap" id="edu-chat"><div style="color:var(--t3);font-size:13px">Zeptej se tutora na cokoliv...</div></div>
+        <div id="edu-chat-load" class="spin-row hidden"><div class="spin"></div>Přemýšlím...</div>
+        <div class="row"><input class="inp" id="edu-inp" placeholder="Napiš otázku..." onkeydown="if(event.key==='Enter')sendEdu()"/><button class="btn bp" onclick="sendEdu()">Odeslat</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TESTING ══════════════ -->
+<div id="page-testing" class="page">
+  <div class="stitle">🧠 Testování znalostí</div>
+
+  <div class="g2 mb4">
+    <!-- Výběr testu -->
+    <div class="card">
+      <div class="ch"><div class="ct">Vyber oblast testování</div><div class="bdg b-pu">AI · 20 kategorií</div></div>
+      <div id="test-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <button class="test-cat-btn" onclick="startTest('Fundamentální analýza — P/E, P/B, DCF, ROE, marže, EPS', 'Začátečník')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">📊</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Fundamentální analýza</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">P/E, P/B, DCF, ROE</div><span style="font-size:9px;background:rgba(0,255,136,.1);color:var(--gn);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Začátečník</span></button>
+        <button class="test-cat-btn" onclick="startTest('Technická analýza — RSI, MACD, Fibonacci, svíčkové vzory, support/resistance', 'Střední')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">📈</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Technická analýza</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">RSI, MACD, Fibonacci</div><span style="font-size:9px;background:rgba(0,212,255,.1);color:var(--ac);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Střední</span></button>
+        <button class="test-cat-btn" onclick="startTest('Makroekonomie — Fed, inflace, úrokové sazby, GDP, výnosová křivka, DXY', 'Střední')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">🌍</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Makroekonomie</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">Fed, inflace, GDP, sazby</div><span style="font-size:9px;background:rgba(0,212,255,.1);color:var(--ac);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Střední</span></button>
+        <button class="test-cat-btn" onclick="startTest('Options a Deriváty — call/put, Greeks, spreads, hedging, futures, swapy', 'Pokročilý')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">⚡</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Options & Deriváty</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">Calls, puts, Greeks</div><span style="font-size:9px;background:rgba(192,132,252,.1);color:var(--pu);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Pokročilý</span></button>
+        <button class="test-cat-btn" onclick="startTest('Valuace firem — DCF, EV/EBITDA, comparable analysis, sum-of-parts, LBO', 'Pokročilý')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">🏦</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Valuace firem</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">DCF, EV/EBITDA, LBO</div><span style="font-size:9px;background:rgba(192,132,252,.1);color:var(--pu);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Pokročilý</span></button>
+        <button class="test-cat-btn" onclick="startTest('Risk Management — VaR, Sharpe ratio, pozice sizing, korelace, drawdown, beta', 'Střední')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">🛡️</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Risk Management</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">VaR, Sharpe, sizing</div><span style="font-size:9px;background:rgba(0,212,255,.1);color:var(--ac);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Střední</span></button>
+        <button class="test-cat-btn" onclick="startTest('ETF a Pasivní investování — index fondy, expense ratio, tracking error, rebalancing, faktorové ETF', 'Začátečník')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">📦</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">ETF & Pasivní invest.</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">Index, tracking error</div><span style="font-size:9px;background:rgba(0,255,136,.1);color:var(--gn);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Začátečník</span></button>
+        <button class="test-cat-btn" onclick="startTest('Dluhopisy a Fixed Income — duration, yield, kupón, credit rating, inverzní křivka', 'Střední')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">📋</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Dluhopisy</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">Duration, yield, credit</div><span style="font-size:9px;background:rgba(0,212,255,.1);color:var(--ac);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Střední</span></button>
+        <button class="test-cat-btn" onclick="startTest('Forex a měnové trhy — kurzy, carry trade, centrální banky, intervence, parita', 'Pokročilý')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">💱</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Forex & Měny</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">Carry trade, CBs, parita</div><span style="font-size:9px;background:rgba(192,132,252,.1);color:var(--pu);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Pokročilý</span></button>
+        <button class="test-cat-btn" onclick="startTest('Behaviorální finance — psychologie investování, kognitivní zkreslení, herding, loss aversion', 'Začátečník')" style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bd)'"><div style="font-size:18px">🧠</div><div style="font-size:12px;font-weight:700;color:var(--tx);font-family:'Syne',sans-serif">Behaviorální finance</div><div style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px">Psychologie, bias</div><span style="font-size:9px;background:rgba(0,255,136,.1);color:var(--gn);border-radius:4px;padding:1px 5px;margin-top:4px;display:inline-block">Začátečník</span></button>
+      </div>
+      <!-- Custom test -->
+      <div style="padding:10px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)">
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Vlastní téma</div>
+        <div class="row">
+          <input class="inp" id="test-custom" placeholder="např. ESG investování, kryptoměny, real estate..." style="flex:1"/>
+          <button class="btn bp" onclick="startTest(document.getElementById('test-custom').value, 'Vlastní')">Spustit test</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nastavení testu + výsledky -->
+    <div class="card">
+      <div class="ch"><div class="ct">⚙️ Nastavení testu</div></div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Počet otázek</label>
+        <div style="display:flex;gap:6px">
+          <button id="q-btn-5"  class="btn bp" onclick="setQCount(5)"  style="font-size:11px">5</button>
+          <button id="q-btn-10" class="btn bs" onclick="setQCount(10)" style="font-size:11px">10</button>
+          <button id="q-btn-15" class="btn bs" onclick="setQCount(15)" style="font-size:11px">15</button>
+          <button id="q-btn-20" class="btn bs" onclick="setQCount(20)" style="font-size:11px">20</button>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Typ otázek</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button id="qt-btn-mix"  class="btn bp" onclick="setQType('mix')"   style="font-size:11px">Mix</button>
+          <button id="qt-btn-mc"   class="btn bs" onclick="setQType('mc')"    style="font-size:11px">Multiple choice</button>
+          <button id="qt-btn-calc" class="btn bs" onclick="setQType('calc')"  style="font-size:11px">Výpočty</button>
+          <button id="qt-btn-true" class="btn bs" onclick="setQType('true')"  style="font-size:11px">True/False</button>
+        </div>
+      </div>
+      <!-- Výsledková tabulka -->
+      <div style="margin-top:8px;padding:10px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)">
+        <div style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Nejlepší výsledky</div>
+        <div id="test-scores">
+          <div style="color:var(--t3);font-size:12px">Zatím žádné výsledky — spusť první test!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test probíhá -->
+  <div id="test-running" class="hidden">
+    <div class="card mb4">
+      <div class="ch">
+        <div class="ct" id="test-title">Test</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="test-progress-badge" class="bdg b-or">Otázka 1/10</span>
+          <span id="test-score-badge" class="bdg b-gn">Skóre: 0</span>
+        </div>
+      </div>
+      <!-- Progress bar -->
+      <div style="background:var(--s3);border-radius:4px;height:4px;margin-bottom:16px">
+        <div id="test-progress-bar" style="height:100%;background:var(--ac);border-radius:4px;transition:width .4s;width:0%"></div>
+      </div>
+      <div id="test-loading" class="spin-row"><div class="spin"></div>AI generuje otázku...</div>
+      <div id="test-question-wrap" class="hidden">
+        <div id="test-question" style="font-size:16px;font-weight:600;font-family:'Syne',sans-serif;margin-bottom:16px;line-height:1.5"></div>
+        <div id="test-options" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+        <div id="test-feedback" class="hidden" style="padding:12px;border-radius:8px;margin-bottom:12px;font-size:13px;line-height:1.6"></div>
+        <button id="test-next-btn" class="btn bp hidden" onclick="nextQuestion()" style="width:100%">Další otázka →</button>
+        <button id="test-finish-btn" class="btn bp hidden" onclick="finishTest()" style="width:100%;background:var(--gn);border-color:var(--gn)">✓ Zobrazit výsledky</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Výsledky testu -->
+  <div id="test-results" class="hidden">
+    <div class="card">
+      <div class="ch"><div class="ct">🎯 Výsledky testu</div><button class="btn bp" onclick="resetTest()">Nový test</button></div>
+      <div id="test-result-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PREDICTION ══════════════ -->
+<div id="page-prediction" class="page">
+  <div class="stitle">🔮 Predikce cen aktiv</div>
+
+  <div class="g2 mb4">
+    <!-- Formulář predikce -->
+    <div class="card">
+      <div class="ch"><div class="ct">Nová predikce</div><div class="bdg b-pu">AI · Analýza</div></div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Aktivum</label>
+        <div class="row mb2">
+          <input class="inp" id="pred-ticker" placeholder="AAPL, GC=F, BTC-USD, EURUSD=X..." style="flex:1" onkeydown="if(event.key==='Enter')runPrediction()"/>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="btn bs" style="font-size:11px" onclick="setPredTicker('AAPL')">AAPL</button>
+          <button class="btn bs" style="font-size:11px" onclick="setPredTicker('NVDA')">NVDA</button>
+          <button class="btn bs" style="font-size:11px" onclick="setPredTicker('GC=F')">Gold</button>
+          <button class="btn bs" style="font-size:11px" onclick="setPredTicker('BTC-USD')">Bitcoin</button>
+          <button class="btn bs" style="font-size:11px" onclick="setPredTicker('CL=F')">WTI Oil</button>
+          <button class="btn bs" style="font-size:11px" onclick="setPredTicker('EURUSD=X')">EUR/USD</button>
+          <button class="btn bs" style="font-size:11px" onclick="setPredTicker('SPY')">S&P 500</button>
+          <button class="btn bs" style="font-size:11px" onclick="setPredTicker('TSLA')">TSLA</button>
+        </div>
+      </div>
+      <div class="g2 mb3">
+        <div>
+          <label style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Horizont predikce</label>
+          <select id="pred-horizon" style="background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:8px 12px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:100%">
+            <option value="1W">1 týden</option>
+            <option value="1M" selected>1 měsíc</option>
+            <option value="3M">3 měsíce</option>
+            <option value="6M">6 měsíců</option>
+            <option value="1Y">1 rok</option>
+            <option value="2Y">2 roky</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Scénář</label>
+          <select id="pred-scenario" style="background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:8px 12px;color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:100%">
+            <option value="base">Base case</option>
+            <option value="bull">Bull case</option>
+            <option value="bear">Bear case</option>
+            <option value="all">Všechny scénáře</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px">Přidej kontext (volitelně)</label>
+        <textarea id="pred-context" class="inp" rows="3" placeholder="např. Fed právě snížil sazby, inflace klesá, firma zveřejnila skvělé výsledky..." style="width:100%;resize:vertical;font-family:'DM Sans',sans-serif;font-size:13px"></textarea>
+      </div>
+      <button class="btn bp" onclick="runPrediction()" id="pred-btn" style="width:100%;font-size:14px;padding:10px">🔮 Generovat predikci</button>
+      <div style="margin-top:8px;font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;text-align:center">⚠️ Predikce jsou pouze vzdělávací. Nejde o finanční poradenství.</div>
+    </div>
+
+    <!-- Uložené predikce -->
+    <div class="card">
+      <div class="ch">
+        <div class="ct">📋 Moje predikce</div>
+        <button class="btn bs" style="font-size:11px;padding:4px 9px" onclick="clearPredictions()">Vymazat vše</button>
+      </div>
+      <div id="pred-saved-list">
+        <div style="color:var(--t3);font-size:12px;font-family:'DM Mono',monospace">Zatím žádné predikce — vytvoř první!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Výsledek predikce -->
+  <div id="pred-loading" class="spin-row hidden"><div class="spin"></div>AI analyzuje a generuje predikci...</div>
+  <div id="pred-result" class="hidden">
+    <div class="card">
+      <div class="ch">
+        <div class="ct" id="pred-result-title">Predikce</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn bs" style="font-size:11px" onclick="savePrediction()">💾 Uložit</button>
+          <button class="btn bs" style="font-size:11px" onclick="document.getElementById('pred-result').classList.add('hidden')">✕</button>
+        </div>
+      </div>
+      <div id="pred-result-content" class="aibox"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADVISOR ══════════════ -->
+<div id="page-advisor" class="page">
+  <div class="stitle">AI Poradce</div>
+  <div class="card">
+    <div class="ch"><div class="ct">Investiční asistent</div><div class="bdg b-pu">AI · Claude</div></div>
+    <div class="row mb4" style="gap:6px">
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Nejlepší value akcie pro rok 2025?')">Value akcie 2025</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Jak inflace ovlivňuje akciový trh?')">Inflace a trhy</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Jak sestavit defensivní portfolio na rok 2025?')">Defensivní portfolio</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Vysvětli invertovanou výnosovou křivku a její dopad')">Výnosová křivka</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('NVDA vs AMD — co koupit a proč?')">NVDA vs AMD</button>
+      <button class="btn bs" style="font-size:11px" onclick="setAdv('Jak silný DXY ovlivňuje akciový trh a komodity?')">DXY a trhy</button>
+    </div>
+    <div class="chat-wrap" id="adv-chat" style="max-height:500px">
+      <div class="msg a">Ahoj! Jsem tvůj AI investiční poradce. Mohu pomoci s analýzou akcií, portfolio strategií nebo vzdělávacími dotazy.<br><br>⚠️ <strong>Nejde o finanční poradenství.</strong> Nejprve zadej Claude API klíč v horní liště.</div>
+    </div>
+    <div id="adv-load" class="spin-row hidden"><div class="spin"></div>AI přemýšlí...</div>
+    <div class="row mt4">
+      <input class="inp" id="adv-inp" placeholder="Zeptej se na cokoliv..." onkeydown="if(event.key==='Enter')sendAdv()"/>
+      <button class="btn bp" id="adv-btn" onclick="sendAdv()">Odeslat</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════
+// FX SYMBOLS — defined first so loadFxTable can use them
+// ══════════════════════════════════════════════════
+const FX_DEFAULT = [
+  { ticker:'EURUSD=X',  label:'EUR / USD',    cat:'Forex',      flag:'🇪🇺' },
+  { ticker:'GBPUSD=X',  label:'GBP / USD',    cat:'Forex',      flag:'🇬🇧' },
+  { ticker:'USDJPY=X',  label:'USD / JPY',    cat:'Forex',      flag:'🇯🇵' },
+  { ticker:'USDCZK=X',  label:'USD / CZK',    cat:'Forex',      flag:'🇨🇿' },
+  { ticker:'USDCHF=X',  label:'USD / CHF',    cat:'Forex',      flag:'🇨🇭' },
+  { ticker:'AUDUSD=X',  label:'AUD / USD',    cat:'Forex',      flag:'🇦🇺' },
+  { ticker:'GC=F',      label:'Gold',          cat:'Komodity',   flag:'🥇' },
+  { ticker:'SI=F',      label:'Silver',        cat:'Komodity',   flag:'🥈' },
+  { ticker:'CL=F',      label:'WTI Oil',       cat:'Komodity',   flag:'🛢️' },
+  { ticker:'BZ=F',      label:'Brent Oil',     cat:'Komodity',   flag:'🛢️' },
+  { ticker:'NG=F',      label:'Nat. Gas',      cat:'Komodity',   flag:'🔥' },
+  { ticker:'HG=F',      label:'Copper',        cat:'Komodity',   flag:'🔶' },
+  { ticker:'PL=F',      label:'Platinum',      cat:'Komodity',   flag:'⬜' },
+  { ticker:'BTC-USD',   label:'Bitcoin',       cat:'Crypto',     flag:'₿' },
+  { ticker:'ETH-USD',   label:'Ethereum',      cat:'Crypto',     flag:'Ξ' },
+  { ticker:'SOL-USD',   label:'Solana',        cat:'Crypto',     flag:'◎' },
+];
+let fxSymbols = (() => { try { const s = JSON.parse(localStorage.getItem('iq_fx')); return s && s.length ? s : null; } catch(e){ return null; } })() || FX_DEFAULT;
+
+// ══════════════════════════════════════════════════
+// PRICE FETCHING — TradingView (primary) + Yahoo + Stooq
+// TradingView knows ALL ETFs, EU stocks, etc.
+// ══════════════════════════════════════════════════
+const priceCache = {};
+
+// Map common ticker formats to TradingView symbol format
+function toTVSymbol(tk) {
+  const t = tk.toUpperCase();
+  // Already in TV format (contains colon)
+  if (t.includes(':')) return t;
+  // EU exchanges
+  if (t.endsWith('.L'))   return 'LSE:' + t.replace('.L','');
+  if (t.endsWith('.PA'))  return 'EURONEXT:' + t.replace('.PA','');
+  if (t.endsWith('.DE'))  return 'XETR:' + t.replace('.DE','');
+  if (t.endsWith('.SW'))  return 'SWX:' + t.replace('.SW','');
+  if (t.endsWith('.AS'))  return 'EURONEXT:' + t.replace('.AS','');
+  if (t.endsWith('.MI'))  return 'MIL:' + t.replace('.MI','');
+  if (t.endsWith('.BR'))  return 'EURONEXT:' + t.replace('.BR','');
+  if (t.endsWith('.LS'))  return 'EURONEXT:' + t.replace('.LS','');
+  // Futures
+  if (t === 'GC=F')    return 'COMEX:GC1!';
+  if (t === 'SI=F')    return 'COMEX:SI1!';
+  if (t === 'CL=F')    return 'NYMEX:CL1!';
+  if (t === 'BZ=F')    return 'ICEEUR:B1!';
+  if (t === 'NG=F')    return 'NYMEX:NG1!';
+  if (t === 'HG=F')    return 'COMEX:HG1!';
+  if (t === 'PL=F')    return 'NYMEX:PL1!';
+  if (t === 'ZW=F')    return 'CBOT:ZW1!';
+  // Crypto
+  if (t === 'BTC-USD') return 'BITSTAMP:BTCUSD';
+  if (t === 'ETH-USD') return 'BITSTAMP:ETHUSD';
+  if (t === 'SOL-USD') return 'BINANCE:SOLUSDT';
+  // Forex
+  if (t === 'EURUSD=X') return 'FX:EURUSD';
+  if (t === 'GBPUSD=X') return 'FX:GBPUSD';
+  if (t === 'USDJPY=X') return 'FX:USDJPY';
+  if (t === 'USDCZK=X') return 'FX:USDCZK';
+  if (t === 'USDCHF=X') return 'FX:USDCHF';
+  if (t === 'AUDUSD=X') return 'FX:AUDUSD';
+  if (t.endsWith('=X'))  return 'FX:' + t.replace('=X','');
+  // Indices
+  if (t === '^VIX' || t === 'VIX') return 'CBOE:VIX';
+  if (t === '^GSPC') return 'FOREXCOM:SPXUSD';
+  if (t === '^IXIC') return 'FOREXCOM:NSXUSD';
+  // US ETFs common
+  if (t === 'SPY')   return 'AMEX:SPY';
+  if (t === 'QQQ')   return 'NASDAQ:QQQ';
+  if (t === 'VTI')   return 'AMEX:VTI';
+  if (t === 'EUNK')  return 'LSE:EUNK';
+  if (t === 'EIMI')  return 'LSE:EIMI';
+  if (t === 'VWRL')  return 'LSE:VWRL';
+  if (t === 'CSPX')  return 'LSE:CSPX';
+  if (t === 'VUSA')  return 'LSE:VUSA';
+  if (t === 'IWDA')  return 'XETR:IWDA';
+  if (t === 'SWDA')  return 'LSE:SWDA';
+  // Default — assume NASDAQ for US stocks
+  return 'NASDAQ:' + t;
+}
+
+// TradingView quote endpoint (unofficial but reliable)
+async function tryTradingView(key) {
+  const tvSym = toTVSymbol(key);
+  const [exchange, symbol] = tvSym.includes(':') ? tvSym.split(':') : ['', tvSym];
+
+  // TradingView's public quote endpoint
+  const tvUrls = [
+    'https://symbol-search.tradingview.com/symbol_info/?symbol=' + encodeURIComponent(tvSym) + '&type=stock,etf,fund,futures,forex,crypto,index',
+    'https://scanner.tradingview.com/symbol/?symbol=' + encodeURIComponent(tvSym),
+  ];
+
+  // Use quote endpoint via proxy
+  for (const proxy of ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?']) {
+    try {
+      const url = 'https://query2.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(key) + '?interval=1d&range=5d';
+      const res = await fetch(proxy + encodeURIComponent(url));
+      if (!res.ok) continue;
+      const json = await res.json();
+      const meta = json?.chart?.result?.[0]?.meta;
+      if (meta?.regularMarketPrice > 0) {
+        const price = meta.regularMarketPrice;
+        const prev  = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPreviousClose || price;
+        return { price, chg: prev > 0 ? ((price - prev) / prev) * 100 : null };
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+function normalizeYahooTicker(tk) {
+  const t = tk.toUpperCase();
+  if (t === 'VIX' || t === '^VIX')    return '^VIX';
+  if (t === 'NG=F' || t === 'NGAS')   return 'NG=F';
+  if (t === 'BZ=F')                   return 'BZ=F';
+  // US Treasury yields — Yahoo uses ^TNX (10Y), ^IRX (13-week/3M), ^FVX (5Y), ^TYX (30Y)
+  if (t === '^TNX'  || t === 'TNX'  || t === 'US10Y') return '^TNX';
+  if (t === '^TYX'  || t === 'TYX'  || t === 'US30Y') return '^TYX';
+  if (t === '^FVX'  || t === 'FVX'  || t === 'US5Y')  return '^FVX';
+  if (t === '^IRX'  || t === 'IRX'  || t === 'US3M')  return '^IRX';
+  // 2Y — Yahoo uses ^IRX (closest proxy) or stooq has us2yt
+  if (t === 'US2Y'  || t === '^US2Y') return '^IRX';
+  return tk;
+}
+
+function toStooqTicker(tk) {
+  const t = tk.toLowerCase();
+  if (t.endsWith('.l'))  return t.replace('.l',  '.uk');
+  if (t.endsWith('.pa')) return t.replace('.pa', '.fr');
+  if (t.endsWith('.as')) return t.replace('.as', '.nl');
+  if (t.endsWith('.sw')) return t.replace('.sw', '.ch');
+  if (t.endsWith('.mi')) return t.replace('.mi', '.it');
+  if (t.endsWith('.de')) return t;
+  if (t === 'gc=f')    return 'xauusd';
+  if (t === 'si=f')    return 'xagusd';
+  if (t === 'cl=f')    return 'crude';
+  if (t === 'bz=f')    return 'brent';
+  if (t === 'ng=f')    return 'natgas';
+  if (t === 'hg=f')    return 'copper';
+  if (t === 'pl=f')    return 'xptusd';
+  if (t === 'btc-usd') return 'btcusd';
+  if (t === 'eth-usd') return 'ethusd';
+  if (t === 'sol-usd') return 'solusd';
+  return t.replace('=x', '');
+}
+
+async function tryYahooChart(key) {
+  const yk = normalizeYahooTicker(key);
+  for (const proxy of ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?', 'https://api.codetabs.com/v1/proxy?quest=']) {
+    try {
+      const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yk) + '?interval=1d&range=5d';
+      const res = await fetch(proxy + encodeURIComponent(url));
+      if (!res.ok) continue;
+      const json = await res.json();
+      const meta = json?.chart?.result?.[0]?.meta;
+      if (meta?.regularMarketPrice > 0) {
+        const price = meta.regularMarketPrice;
+        const prev  = meta.chartPreviousClose || meta.previousClose || meta.regularMarketPreviousClose || price;
+        return { price, chg: prev > 0 ? ((price - prev) / prev) * 100 : null };
+      }
+    } catch(e) {}
+  }
+  // query2 fallback
+  try {
+    const url = 'https://query2.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yk) + '?interval=1d&range=5d';
+    const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+    if (res.ok) {
+      const json = await res.json();
+      const meta = json?.chart?.result?.[0]?.meta;
+      if (meta?.regularMarketPrice > 0) {
+        const price = meta.regularMarketPrice;
+        const prev  = meta.chartPreviousClose || meta.previousClose || price;
+        return { price, chg: prev > 0 ? ((price - prev) / prev) * 100 : null };
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function tryStooq(key) {
+  const sk = toStooqTicker(key);
+  const tries = new Set([sk, key.toLowerCase()]);
+  if (key.toUpperCase().endsWith('=X')) {
+    const pair = key.toLowerCase().replace('=x','');
+    if (pair.length === 6) tries.add(pair.slice(0,3) + '/' + pair.slice(3));
+  }
+  for (const ticker of tries) {
+    try {
+      const url = 'https://stooq.com/q/l/?s=' + encodeURIComponent(ticker) + '&f=sd2t2ohlcv&h&e=csv';
+      const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+      if (!res.ok) continue;
+      const text = await res.text();
+      const parts = text.trim().split('\n')[1]?.split(',');
+      if (parts && parts.length >= 5) {
+        const close = parseFloat(parts[4]);
+        const open  = parseFloat(parts[2]);
+        if (close > 0 && !isNaN(close)) {
+          return { price: close, chg: open > 0 && !isNaN(open) ? ((close - open) / open) * 100 : null };
+        }
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+// Try TradingView widget data — uses their public REST-like endpoint
+// For ETFs like EUNK, EIMI that Yahoo doesn't know
+async function tryTVWidgetData(key) {
+  const tvSym = toTVSymbol(key);
+  const [exchange, symName] = tvSym.includes(':') ? tvSym.split(':') : [null, tvSym];
+
+  // TradingView public scanner/quote endpoints (no auth needed)
+  const tvEndpoints = [
+    // Symbol quote endpoint — works for all TV symbols
+    'https://symbol-search.tradingview.com/symbol_info/?symbol=' + encodeURIComponent(symName || tvSym),
+    // Alternative: scanner with field request
+    'https://scanner.tradingview.com/symbol?symbol=' + encodeURIComponent(tvSym) + '&fields=close,change,change_abs,open,prev_close_price,volume',
+    // Quotes v2
+    'https://quotes.tradingview.com/quotes?symbols=' + encodeURIComponent(tvSym),
+  ];
+
+  for (const proxy of ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?']) {
+    for (const ep of tvEndpoints) {
+      try {
+        const res = await fetch(proxy + encodeURIComponent(ep));
+        if (!res.ok) continue;
+        const text = await res.text();
+        if (!text || text.length < 5) continue;
+        let json;
+        try { json = JSON.parse(text); } catch(e) { continue; }
+
+        // Format: {d: [close, change, ...]} from scanner
+        if (Array.isArray(json?.d) && json.d[0] > 0) {
+          return { price: json.d[0], chg: json.d[1] || null };
+        }
+        // Format: {price, change_percent} from quotes
+        if (json?.price > 0) return { price: json.price, chg: json.change_percent || null };
+        if (json?.close > 0) return { price: json.close, chg: json.change_percent || null };
+        // Array of results
+        if (Array.isArray(json) && json[0]?.price > 0) return { price: json[0].price, chg: json[0].change_percent || null };
+        // symbol_info returns array of fields
+        if (json?.close > 0) return { price: json.close, chg: null };
+      } catch(e) {}
+    }
+  }
+
+  // Last resort: map TV exchange back to Yahoo ticker and try with exchange suffix
+  if (exchange) {
+    const exchangeToYahoo = {
+      'LSE': '.L', 'EURONEXT': '.PA', 'XETR': '.DE', 'SWX': '.SW',
+      'MIL': '.MI', 'AMEX': '', 'NASDAQ': '', 'NYSE': '',
+      'COMEX': '', 'NYMEX': '', 'BITSTAMP': '-USD', 'FX': '=X',
+      'CBOT': '', 'ICEEUR': '',
+    };
+    const suffix = exchangeToYahoo[exchange];
+    if (suffix !== undefined && symName) {
+      // Build Yahoo-compatible ticker
+      let yahooTk;
+      if (exchange === 'FX') yahooTk = symName + '=X';
+      else if (exchange === 'BITSTAMP') yahooTk = symName.replace('USD', '') + '-USD';
+      else yahooTk = symName + (suffix || '');
+
+      try {
+        const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yahooTk) + '?interval=1d&range=5d';
+        const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+        if (res.ok) {
+          const json = await res.json();
+          const meta = json?.chart?.result?.[0]?.meta;
+          if (meta?.regularMarketPrice > 0) {
+            const price = meta.regularMarketPrice;
+            const prev = meta.chartPreviousClose || meta.previousClose || price;
+            return { price, chg: prev > 0 ? ((price - prev) / prev) * 100 : null };
+          }
+        }
+      } catch(e) {}
+    }
+  }
+  return null;
+}
+
+async function fetchPriceWithChange(ticker) {
+  const key = ticker.toUpperCase();
+  if (priceCache[key] && Date.now() - priceCache[key].ts < 120000) {
+    return { price: priceCache[key].price, chg: priceCache[key].chg };
+  }
+  // Try sources in order: Yahoo (fast, reliable for US), TradingView (ETFs, EU), Stooq (EU stocks)
+  let result = await tryYahooChart(key);
+  if (!result) result = await tryTVWidgetData(key);
+  if (!result) result = await tryStooq(key);
+
+  if (result && result.price > 0) {
+    priceCache[key] = { ...result, ts: Date.now() };
+    return result;
+  }
+  return { price: null, chg: null };
+}
+
+async function fetchRealPrice(ticker) {
+  const r = await fetchPriceWithChange(ticker);
+  return r.price;
+}
+
+// ══════════════════════════════════════════════════
+// FOREX & KOMODITY TABLE
+// ══════════════════════════════════════════════════
+async function loadFxTable() {
+  const syms = (typeof fxSymbols !== 'undefined' && fxSymbols.length) ? fxSymbols : FX_DEFAULT;
+  const fxLoad = document.getElementById('fx-loading');
+  const fxStat = document.getElementById('fx-status');
+  if (fxLoad) fxLoad.classList.remove('hidden');
+  if (fxStat) fxStat.textContent = 'Načítám...';
+
+  const results = await Promise.all(syms.map(s => fetchPriceWithChange(s.ticker)));
+  if (fxLoad) fxLoad.classList.add('hidden');
+
+  let bycat = {};
+  syms.forEach((s, i) => { if (!bycat[s.cat]) bycat[s.cat] = []; bycat[s.cat].push({...s, price: results[i].price, chg: results[i].chg}); });
+
+  const catColors = { Forex:'var(--ac)', Komodity:'var(--or)', Crypto:'var(--pu)', Akcie:'var(--gn)' };
+  let html = '';
+  Object.entries(bycat).forEach(([cat, items]) => {
+    html += '<div style="font-size:10px;font-family:\'DM Mono\',monospace;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:10px 0 6px;border-bottom:1px solid var(--bd);margin-bottom:2px">' + cat + '</div>';
+    items.forEach(item => {
+      const col = catColors[item.cat] || 'var(--t2)';
+      if (item.price === null) {
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(37,45,58,.3)">' +
+          '<div style="display:flex;align-items:center;gap:9px"><span style="font-size:16px">' + item.flag + '</span>' +
+          '<span style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px">' + esc(item.label) + '</span></div>' +
+          '<span style="color:var(--t3);font-size:12px;font-family:\'DM Mono\',monospace">N/A</span></div>';
+      } else {
+        const decimals = item.ticker.includes('JPY') ? 2 : item.ticker.includes('=X') ? 4 : (item.price > 1000 ? 0 : 2);
+        const formatted = item.price.toLocaleString('en-US', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+        const prefix = item.ticker.includes('=X') ? '' : '$';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(37,45,58,.3);cursor:pointer;transition:background .15s" ' +
+          'onmouseover="this.style.background=\'var(--s2)\'" onmouseout="this.style.background=\'\'" ' +
+          'onclick="window.open(\'https://finance.yahoo.com/quote/' + encodeURIComponent(item.ticker) + '\',\'_blank\')">' +
+          '<div style="display:flex;align-items:center;gap:9px"><span style="font-size:16px">' + item.flag + '</span>' +
+          '<div><div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px;color:var(--tx)">' + esc(item.label) + '</div>' +
+          '<div style="font-size:10px;color:var(--t3);font-family:\'DM Mono\',monospace">' + esc(item.ticker) + '</div></div></div>' +
+          '<div style="text-align:right">' +
+          '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:500;color:' + col + '">' + prefix + formatted + '</div>' +
+          (item.chg !== null ? '<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:' + (item.chg>=0?'var(--gn)':'var(--rd)') + '">' + (item.chg>=0?'+':'') + item.chg.toFixed(2) + '%</div>' : '') +
+          '</div></div>';
+      }
+    });
+    html += '<div style="height:6px"></div>';
+  });
+
+  const fxTable = document.getElementById('fx-table');
+  if (fxTable) fxTable.innerHTML = html;
+  if (fxStat) { fxStat.textContent = 'LIVE'; fxStat.className = 'bdg b-gn'; }
+}
+
+// ══════════════════════════════════════════════════
+// LIVE SCREENER TABLE
+// ══════════════════════════════════════════════════
+const SCREENER_STOCKS = [
+  // US Mega cap Tech
+  { ticker:'AAPL',  name:'Apple',              sector:'Tech',     mcap:'3.7T' },
+  { ticker:'MSFT',  name:'Microsoft',          sector:'Tech',     mcap:'3.1T' },
+  { ticker:'NVDA',  name:'Nvidia',             sector:'Tech',     mcap:'2.9T' },
+  { ticker:'AMZN',  name:'Amazon',             sector:'Consumer', mcap:'2.3T' },
+  { ticker:'GOOGL', name:'Alphabet',           sector:'Tech',     mcap:'2.1T' },
+  { ticker:'META',  name:'Meta',               sector:'Tech',     mcap:'1.6T' },
+  { ticker:'TSLA',  name:'Tesla',              sector:'Auto',     mcap:'1.1T' },
+  { ticker:'BRK-B', name:'Berkshire B',        sector:'Finance',  mcap:'1.0T' },
+  { ticker:'LLY',   name:'Eli Lilly',          sector:'Health',   mcap:'750B' },
+  { ticker:'AVGO',  name:'Broadcom',           sector:'Tech',     mcap:'740B' },
+  { ticker:'JPM',   name:'JPMorgan Chase',     sector:'Finance',  mcap:'700B' },
+  { ticker:'V',     name:'Visa',               sector:'Finance',  mcap:'620B' },
+  { ticker:'UNH',   name:'UnitedHealth',       sector:'Health',   mcap:'570B' },
+  { ticker:'XOM',   name:'ExxonMobil',         sector:'Energy',   mcap:'530B' },
+  { ticker:'MA',    name:'Mastercard',         sector:'Finance',  mcap:'500B' },
+  { ticker:'PG',    name:'Procter & Gamble',   sector:'Consumer', mcap:'390B' },
+  { ticker:'JNJ',   name:'Johnson & Johnson',  sector:'Health',   mcap:'380B' },
+  { ticker:'COST',  name:'Costco',             sector:'Retail',   mcap:'370B' },
+  { ticker:'HD',    name:'Home Depot',         sector:'Retail',   mcap:'360B' },
+  { ticker:'ABBV',  name:'AbbVie',             sector:'Health',   mcap:'330B' },
+  { ticker:'BAC',   name:'Bank of America',    sector:'Finance',  mcap:'320B' },
+  { ticker:'NFLX',  name:'Netflix',            sector:'Tech',     mcap:'310B' },
+  { ticker:'KO',    name:'Coca-Cola',          sector:'Consumer', mcap:'300B' },
+  { ticker:'WMT',   name:'Walmart',            sector:'Retail',   mcap:'290B' },
+  { ticker:'CVX',   name:'Chevron',            sector:'Energy',   mcap:'270B' },
+  { ticker:'MRK',   name:'Merck',              sector:'Health',   mcap:'260B' },
+  { ticker:'ORCL',  name:'Oracle',             sector:'Tech',     mcap:'250B' },
+  { ticker:'CRM',   name:'Salesforce',         sector:'Tech',     mcap:'240B' },
+  { ticker:'AMD',   name:'AMD',                sector:'Tech',     mcap:'230B' },
+  { ticker:'NOW',   name:'ServiceNow',         sector:'Tech',     mcap:'220B' },
+  { ticker:'PEP',   name:'PepsiCo',            sector:'Consumer', mcap:'200B' },
+  { ticker:'TMO',   name:'Thermo Fisher',      sector:'Health',   mcap:'190B' },
+  { ticker:'WFC',   name:'Wells Fargo',        sector:'Finance',  mcap:'180B' },
+  { ticker:'AMAT',  name:'Applied Materials',  sector:'Tech',     mcap:'170B' },
+  { ticker:'GS',    name:'Goldman Sachs',      sector:'Finance',  mcap:'165B' },
+  { ticker:'NEE',   name:'NextEra Energy',     sector:'Energy',   mcap:'155B' },
+  { ticker:'DE',    name:'Deere & Co',         sector:'Industry', mcap:'120B' },
+  { ticker:'SBUX',  name:'Starbucks',          sector:'Consumer', mcap:'100B' },
+  { ticker:'INTC',  name:'Intel',              sector:'Tech',     mcap:'90B'  },
+  { ticker:'T',     name:'AT&T',               sector:'Telco',    mcap:'170B' },
+  { ticker:'PYPL',  name:'PayPal',             sector:'Finance',  mcap:'70B'  },
+  { ticker:'UBER',  name:'Uber',               sector:'Tech',     mcap:'165B' },
+  { ticker:'SPOT',  name:'Spotify',            sector:'Tech',     mcap:'80B'  },
+  { ticker:'PLTR',  name:'Palantir',           sector:'Tech',     mcap:'160B' },
+  { ticker:'ARM',   name:'Arm Holdings',       sector:'Tech',     mcap:'140B' },
+  { ticker:'MSTR',  name:'MicroStrategy',      sector:'Tech',     mcap:'80B'  },
+  // EU Blue chips (London)
+  { ticker:'SHEL',  name:'Shell',              sector:'Energy',   mcap:'200B', exchange:'LSE' },
+  { ticker:'AZN',   name:'AstraZeneca',        sector:'Health',   mcap:'230B', exchange:'LSE' },
+  { ticker:'HSBA.L',name:'HSBC',               sector:'Finance',  mcap:'160B', exchange:'LSE' },
+  { ticker:'BP',    name:'BP',                 sector:'Energy',   mcap:'90B',  exchange:'LSE' },
+  { ticker:'GSK',   name:'GSK',                sector:'Health',   mcap:'75B',  exchange:'LSE' },
+  { ticker:'VOD.L', name:'Vodafone',           sector:'Telco',    mcap:'20B',  exchange:'LSE' },
+  // EU Blue chips (Frankfurt)
+  { ticker:'SAP',   name:'SAP',                sector:'Tech',     mcap:'250B', exchange:'XETR' },
+  { ticker:'BMW.DE',name:'BMW',                sector:'Auto',     mcap:'55B',  exchange:'XETR' },
+  { ticker:'SIE.DE',name:'Siemens',            sector:'Industry', mcap:'140B', exchange:'XETR' },
+  { ticker:'ALV.DE',name:'Allianz',            sector:'Finance',  mcap:'120B', exchange:'XETR' },
+  { ticker:'DTE.DE',name:'Deutsche Telekom',   sector:'Telco',    mcap:'90B',  exchange:'XETR' },
+  // EU (Paris/Switzerland)
+  { ticker:'AIR.PA',name:'Airbus',             sector:'Industry', mcap:'130B', exchange:'EPA' },
+  { ticker:'TTE.PA',name:'TotalEnergies',      sector:'Energy',   mcap:'140B', exchange:'EPA' },
+  { ticker:'ABBN.SW',name:'ABB',               sector:'Industry', mcap:'90B',  exchange:'SIX' },
+  { ticker:'NESN.SW',name:'Nestlé',            sector:'Consumer', mcap:'250B', exchange:'SIX' },
+  { ticker:'NOVN.SW',name:'Novartis',          sector:'Health',   mcap:'200B', exchange:'SIX' },
+  { ticker:'ROG.SW', name:'Roche',             sector:'Health',   mcap:'210B', exchange:'SIX' },
+];
+
+const sectorColors = { Tech:'var(--ac)', Finance:'var(--gn)', Health:'var(--pu)', Consumer:'var(--or)', Energy:'var(--rd)', Auto:'var(--or)', Retail:'var(--t2)' };
+
+async function loadScreenerTable() {
+  show('sc-loading');
+  setText('sc-status', 'Načítám...');
+  $('sc-status').className = 'bdg b-or';
+
+  const results = await Promise.all(SCREENER_STOCKS.map(s => fetchPriceWithChange(s.ticker)));
+  hide('sc-loading');
+
+  const sectorColors2 = { Tech:'var(--ac)', Finance:'var(--gn)', Health:'var(--pu)', Consumer:'var(--or)', Energy:'var(--rd)', Auto:'var(--or)', Retail:'var(--t2)', Industry:'#60a5fa', Telco:'#a3e635' };
+
+  const rows = SCREENER_STOCKS.map((s, i) => {
+    const { price: p, chg } = results[i];
+    const secCol = sectorColors2[s.sector] || 'var(--t2)';
+    const chgStr = chg !== null ? (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%' : '—';
+    const chgCol = chg === null ? 'var(--t3)' : chg >= 0 ? 'var(--gn)' : 'var(--rd)';
+    const exBadge = s.exchange ? '<span style="font-size:9px;background:rgba(255,255,255,.06);border-radius:3px;padding:1px 4px;margin-left:4px;color:var(--t3);font-family:\'DM Mono\',monospace">' + s.exchange + '</span>' : '';
+    if (p === null) {
+      return '<tr style="cursor:pointer" onclick="window.open(\'https://finance.yahoo.com/quote/' + s.ticker + '\',\'_blank\')">' +
+        '<td><strong style="font-family:\'Syne\',sans-serif;font-size:13px">' + s.ticker + '</strong>' + exBadge +
+        '<div style="font-size:11px;color:var(--t2)">' + s.name + '</div></td>' +
+        '<td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.05);color:' + secCol + ';font-family:\'DM Mono\',monospace">' + s.sector + '</span></td>' +
+        '<td colspan="4" style="color:var(--t3);font-family:\'DM Mono\',monospace;font-size:12px">—</td></tr>';
+    }
+    const decimals = p > 1000 ? 0 : p > 10 ? 2 : 4;
+    const priceStr = '$' + p.toLocaleString('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
+    const arrowIcon = chg !== null ? (chg >= 0 ? '▲' : '▼') : '';
+    return '<tr style="cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'var(--s2)\'" onmouseout="this.style.background=\'\'" onclick="window.open(\'https://finance.yahoo.com/quote/' + s.ticker + '\',\'_blank\')">' +
+      '<td><strong style="font-family:\'Syne\',sans-serif;font-size:13px;color:var(--tx)">' + s.ticker + '</strong>' + exBadge +
+      '<div style="font-size:10px;color:var(--t3);font-family:\'DM Mono\',monospace">' + s.mcap + '</div>' +
+      '<div style="font-size:11px;color:var(--t2)">' + s.name + '</div></td>' +
+      '<td><span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.05);color:' + secCol + ';font-family:\'DM Mono\',monospace">' + s.sector + '</span></td>' +
+      '<td style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:500;color:var(--tx)">' + priceStr + '</td>' +
+      '<td style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:600;color:' + chgCol + '">' + arrowIcon + ' ' + chgStr + '</td>' +
+      '<td><a href="https://finance.yahoo.com/quote/' + s.ticker + '" target="_blank" style="color:var(--ac);font-size:11px;font-family:\'DM Mono\',monospace;text-decoration:none">↗</a></td>' +
+      '</tr>';
+  });
+
+  $('sc-table').innerHTML = '<table class="tbl" style="width:100%"><thead><tr>' +
+    '<th>Ticker / Firma</th><th>Sektor</th>' +
+    '<th style="font-family:\'DM Mono\',monospace">Cena</th>' +
+    '<th style="font-family:\'DM Mono\',monospace">Den %</th>' +
+    '<th></th>' +
+    '</tr></thead><tbody>' + rows.join('') + '</tbody></table>' +
+    '<div style="margin-top:8px;font-size:11px;color:var(--t3);font-family:\'DM Mono\',monospace">MCap >5B · ' + SCREENER_STOCKS.length + ' firem (US + EU) · auto-refresh 60s</div>';
+
+  setText('sc-status', 'LIVE · ' + new Date().toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'}));
+  $('sc-status').className = 'bdg b-gn';
+  clearTimeout(window._scTimer);
+  window._scTimer = setTimeout(loadScreenerTable, 60000);
+}
+
+// ══════════════════════════════════════════════════
+// INIT — pre-load news na pozadí, news tab bude okamžitý
+// ══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  // Restore currency preference
+  const savedCur = localStorage.getItem('iq_currency') || 'CZK';
+  currentCurrency = savedCur;
+  const curEl = document.getElementById('pf-currency');
+  if (curEl) curEl.value = savedCur;
+  await fetchExchangeRate();
+
+  renderPortfolio();
+  refreshWatchlist();
+  initChart();
+  loadDashNews();
+
+  // Pre-load markets in background (instant when tab opens)
+  loadFxTable();
+  loadScreenerTable();
+  loadYieldCurve();
+  loadVixTable();
+
+  // pre-fetch bloomberg na pozadí
+  try {
+    const items = await fetchRSS('bloomberg');
+    if (!items.length) return;
+    newsInit = true;
+    cachedHeadlines = items.map(i => i.title);
+    const loading = document.getElementById('news-loading');
+    const countEl = document.getElementById('news-count');
+    const list    = document.getElementById('news-list');
+    if (loading) loading.classList.add('hidden');
+    if (countEl) countEl.textContent = items.length + ' zpráv';
+    if (list) list.innerHTML = items.map(i =>
+      '<a class="ni" href="' + i.link + '" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit">' +
+      '<div class="ni-t">' + esc(i.title) + '</div>' +
+      '<div class="ni-m"><span>' + fmtDate(i.pubDate) + '</span>' +
+      '<span style="color:var(--ac)">&#8599; otevřít</span></div></a>'
+    ).join('');
+  } catch(e) { /* silently ignore — user can load manually */ }
+});
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function $(id) { return document.getElementById(id); }
+function show(id) { const e=$(id); if(e) e.classList.remove('hidden'); }
+function hide(id) { const e=$(id); if(e) e.classList.add('hidden'); }
+function setText(id, t) { const e=$(id); if(e) e.textContent=t; }
+function setHTML(id, h) { const e=$(id); if(e) e.innerHTML=h; }
+function esc(s) { const d=document.createElement('div'); d.textContent=String(s||''); return d.innerHTML; }
+
+function showErr(id, msg) {
+  const e = $(id);
+  if (!e) return;
+  e.className = 'errbox';
+  e.textContent = msg;
+  e.classList.remove('hidden');
+}
+function showAI(id, text) {
+  const e = $(id);
+  if (!e) return;
+  e.className = 'aibox';
+  e.textContent = text;
+  e.classList.remove('hidden');
+}
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+let chartsInit = false;
+let newsInit   = false;
+
+function nav(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  const page = $('page-' + id);
+  if (page) page.classList.add('on');
+  if (btn) btn.classList.add('on');
+  window.scrollTo(0, 0);
+  if (id === 'charts'  && !chartsInit)  { chartsInit  = true; initChart(); }
+  if (id === 'news'    && !newsInit)    { newsInit    = true; loadNews('bloomberg', document.querySelector('.src-tab')); }
+  if (id === 'markets') { loadFxTable(); loadScreenerTable(); loadYieldCurve(); loadVixTable(); }
+}
+
+// ══════════════════════════════════════════════════
+// CLAUDE API — via backend proxy (klíč skrytý na serveru)
+// ══════════════════════════════════════════════════
+async function callClaude(messages, system, maxTokens=4000) {
+  const res = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, system, max_tokens: maxTokens })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error || `HTTP ${res.status}`);
+  }
+  const d = await res.json();
+  return d.content?.[0]?.text || '';
+}
+
+// ══════════════════════════════════════════════════
+// RSS NEWS — via allorigins.win CORS proxy
+// ══════════════════════════════════════════════════
+const RSS = {
+  bloomberg:   'https://feeds.bloomberg.com/markets/news.rss',
+  cnbc:        'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114',
+  ft:          'https://feeds.content.dowjones.io/public/rss/mw_topstories',
+  yahoo:       'https://finance.yahoo.com/news/rssindex',
+  wsj:         'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
+  seeking:     'https://seekingalpha.com/feed.xml',
+  reuters:     'https://feeds.reuters.com/reuters/businessNews',
+};
+
+let cachedHeadlines = [];
+
+async function fetchRSS(source) {
+  const feedUrl = RSS[source] || RSS.bloomberg;
+
+  // Try multiple JSON converters first (most reliable, avoid CORS issues)
+  const jsonConverters = [
+    () => fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl) + '&count=30'),
+    () => fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl)).then(async r => {
+      if (!r.ok) throw new Error('allorigins failed');
+      const d = await r.json();
+      // Parse XML from contents field
+      if (!d.contents) throw new Error('no contents');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(d.contents, 'text/xml');
+      const nodes = Array.from(doc.querySelectorAll('item, entry')).slice(0, 25);
+      if (!nodes.length) throw new Error('no items');
+      return { _parsed: nodes.map(n => ({
+        title: n.querySelector('title')?.textContent?.trim() || '',
+        link:  n.querySelector('link')?.getAttribute('href') || n.querySelector('link')?.textContent?.trim() || '#',
+        pubDate: n.querySelector('pubDate,published,updated')?.textContent?.trim() || '',
+      })).filter(i => i.title) };
+    }),
+  ];
+
+  // Raw proxies for direct XML fetch
+  const rawProxies = [
+    () => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(feedUrl)),
+    () => fetch('https://corsproxy.io/?' + encodeURIComponent(feedUrl)),
+    () => fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(feedUrl)),
+    () => fetch('https://thingproxy.freeboard.io/fetch/' + feedUrl),
+    () => fetch('https://yacdn.org/proxy/' + feedUrl),
+  ];
+
+  // Try rss2json first
+  try {
+    const res = await jsonConverters[0]();
+    if (res.ok) {
+      const json = await res.json();
+      if (json.status === 'ok' && json.items?.length) {
+        return json.items.map(i => ({
+          title:   i.title?.trim() || '',
+          link:    i.link || i.guid || '#',
+          pubDate: i.pubDate || '',
+        })).filter(i => i.title).slice(0, 25);
+      }
+    }
+  } catch(e) {}
+
+  // Try allorigins JSON (returns parsed)
+  try {
+    const result = await jsonConverters[1]();
+    if (result._parsed?.length) return result._parsed.slice(0, 25);
+  } catch(e) {}
+
+  // Try raw proxies + parse XML
+  let xml = null, lastErr = '';
+  for (const proxyFn of rawProxies) {
+    try {
+      const res = await proxyFn();
+      if (!res.ok) { lastErr = 'HTTP ' + res.status; continue; }
+      const text = await res.text();
+      if (text && (text.includes('<item>') || text.includes('<entry>'))) { xml = text; break; }
+      lastErr = 'Prázdná odpověď';
+    } catch(e) { lastErr = e.message; }
+  }
+
+  if (!xml) throw new Error('Všechny proxy selhaly: ' + lastErr);
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, 'text/xml');
+  const nodes = Array.from(doc.querySelectorAll('item, entry')).slice(0, 25);
+  return nodes.map(node => {
+    const title   = node.querySelector('title')?.textContent?.trim() || '';
+    const link    = node.querySelector('link')?.getAttribute('href')
+                 || node.querySelector('link')?.textContent?.trim()
+                 || '#';
+    const pubDate = node.querySelector('pubDate, published, updated')?.textContent?.trim() || '';
+    return { title, link, pubDate };
+  }).filter(i => i.title);
+}
+
+function fmtDate(str) {
+  if (!str) return '';
+  try { return new Date(str).toLocaleString('cs-CZ', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+  catch { return str.substring(0,16); }
+}
+
+async function loadNews(source, btn) {
+  document.querySelectorAll('.src-tab').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  show('news-loading');
+  setHTML('news-list', '');
+  setText('news-count', '');
+  try {
+    const items = await fetchRSS(source);
+    cachedHeadlines = items.map(i => i.title);
+    hide('news-loading');
+    setText('news-count', items.length + ' zpráv');
+    setHTML('news-list', items.map(i => `
+      <a class="ni" href="${i.link}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit">
+        <div class="ni-t">${esc(i.title)}</div>
+        <div class="ni-m"><span>${fmtDate(i.pubDate)}</span><span style="color:var(--ac)">↗ otevřít</span></div>
+      </a>`).join(''));
+  } catch(e) {
+    hide('news-loading');
+    setHTML('news-list', `<div class="errbox">Chyba načítání RSS: ${esc(e.message)}<br><small>Zkus jiný zdroj nebo zkontroluj připojení k internetu.</small></div>`);
+  }
+}
+
+async function loadDashNews() {
+  try {
+    const items = await fetchRSS('bloomberg');
+    cachedHeadlines = items.map(i => i.title);
+    setHTML('dash-news', items.slice(0,6).map(i => `
+      <a class="ni" href="${i.link}" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit">
+        <div class="ni-t">${esc(i.title)}</div>
+        <div class="ni-m"><span>Reuters</span><span>${fmtDate(i.pubDate)}</span><span style="color:var(--ac)">↗</span></div>
+      </a>`).join(''));
+  } catch {
+    setHTML('dash-news', '<div style="color:var(--t3);font-size:13px">Zprávy dostupné v záložce News.</div>');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// AI OPPORTUNITIES FROM NEWS
+// ══════════════════════════════════════════════════
+async function generateOpportunities() {
+  const btn = $('gen-opps-btn');
+  btn.disabled = true;
+  show('opps-loading');
+  const headlines = cachedHeadlines.length
+    ? cachedHeadlines.slice(0,15).join('\n')
+    : 'Fed drží sazby, naznačuje snížení v H2 2025\nNvidia Q4 překonává odhady o 18%\nČínský PMI 47.3\nOPEC+ zvyšuje těžbu, ropa -3%\nECB ponechává sazby';
+  try {
+    const raw = await callClaude([{
+      role:'user',
+      content:
+        'Na základě těchto aktuálních zpráv navrhni 5-6 konkrétních investičních příležitostí (mix LONG i SHORT/HEDGE).\n\n' +
+        'Odpověz POUZE jako JSON array (bez markdown, bez backticks, čistý JSON):\n' +
+        '[{"ticker":"NVDA","type":"long","reason":"Detailní důvod min. 2-3 věty proč, přímá vazba na zprávu a fundamentální argument","catalyst":"Konkrétní katalyzátor z dnešních zpráv","target":"+15-25%","horizon":"3-6 měsíců","risk":"Medium","conf":75}]\n\n' +
+        'Zprávy:\n' + headlines
+    }],
+    'Jsi hedge fund analytik. Odpovídej POUZE validním JSON array. Každý důvod musí být konkrétní a detailní, min. 2-3 věty.',
+    1000);
+
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('AI nevrátilo validní JSON');
+    const opps = JSON.parse(match[0]);
+    setHTML('opps-container', opps.map(o => {
+      const lng = o.type==='long';
+      const rc = o.risk==='Low'?'b-gn':o.risk==='High'?'b-rd':'b-or';
+      return '<div class="opp ' + (lng?'lng':'sht') + '">' +
+        '<div class="opp-h">' +
+        '<div><span class="opp-tk">' + esc(o.ticker) + '</span><span style="font-size:11px;margin-left:7px;color:var(--t2)">' + (lng?'📈 LONG':'📉 SHORT') + '</span></div>' +
+        '<div style="text-align:right"><div style="font-size:14px;font-weight:700;font-family:Syne;color:' + (lng?'var(--gn)':'var(--rd)') + '">' + esc(o.target) + '</div>' +
+        '<div style="font-size:10px;color:var(--t2);font-family:\'DM Mono\'">conf. ' + esc(String(o.conf)) + '%</div></div>' +
+        '</div>' +
+        '<div class="opp-d">' + esc(o.reason) + '</div>' +
+        (o.catalyst ? '<div style="margin-top:5px;font-size:11px;color:var(--ac);font-family:\'DM Mono\'">⚡ ' + esc(o.catalyst) + '</div>' : '') +
+        '<div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap">' +
+        '<span class="bdg ' + rc + '">Risk: ' + esc(o.risk) + '</span>' +
+        (o.horizon ? '<span class="bdg b-bl">' + esc(o.horizon) + '</span>' : '') +
+        '</div>' +
+        '</div>';
+    }).join(''));
+  } catch(e) {
+    setHTML('opps-container', '<div class="errbox">' + esc(e.message) + '</div>');
+  }
+  hide('opps-loading');
+  btn.disabled = false;
+}
+
+async function analyzeAllNews() {
+  const btn = $('analyze-all-btn');
+  btn.disabled = true;
+  show('news-ai-loading');
+  hide('news-ai-text');
+  const headlines = cachedHeadlines.length
+    ? cachedHeadlines.slice(0,20).map((h,i) => (i+1)+'. '+h).join('\n')
+    : 'Nejprve načti zprávy kliknutím na zdroj vlevo.';
+  try {
+    const text = await callClaude([{
+      role:'user',
+      content:
+        'Analyzuj tyto aktuální finanční zprávy a vytvoř PODROBNOU investiční analýzu:\n\n' + headlines + '\n\n' +
+        '## 1. Makroekonomický kontext\n- Co zprávy říkají o celkovém tržním prostředí\n- Klíčové trendy které se opakují v headlines\n\n' +
+        '## 2. LONG příležitosti — detailní rozbor\nPro každou příležitost uveď: Ticker, proč je to příležitost (přímá vazba na zprávu), vstupní strategie, časový horizont, cílová cena nebo % potenciál, stop-loss\n\n' +
+        '## 3. SHORT nebo HEDGE příležitosti\n- Co může klesnout a proč (přímá vazba na zprávy)\n- Jak se hedgovat (konkrétní instrumenty)\n\n' +
+        '## 4. Sektory k přehodnocení\n- Overweight: sektory kde být více\n- Underweight: sektory kde být méně\n- Konkrétní ETF nebo akcie pro každý sektor\n\n' +
+        '## 5. Klíčová makro rizika\n- Min. 3 specifická rizika plynoucí z dnešních zpráv\n\n' +
+        '## 6. Akční plán\n- Co konkrétně sledovat v příštích dnech\n- Klíčové ekonomické eventy/data\n\n' +
+        'Uváděj konkrétní tickery. Nejde o finanční poradenství.'
+    }],
+    'Jsi senior tržní stratég s 20 lety zkušeností. Analyzuješ zprávy a hledáš KONKRÉTNÍ investiční příležitosti. Tvé analýzy jsou MAXIMÁLNĚ PODROBNÉ, strukturované a plné akčních doporučení. Na konci vždy přidej 2-3 doporučení pro hlubší čtení. Odpovídáš česky.',
+    4000);
+    showAI('news-ai-text', text);
+  } catch(e) {
+    showErr('news-ai-text', e.message);
+  }
+  hide('news-ai-loading');
+  btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════════
+let curSym = 'NASDAQ:AAPL';
+let curChartTab = 'chart';
+
+function initChart() {
+  renderChartPane('chart', $('chart-pane'));
+}
+
+function setChart(s) { $('chart-symbol').value=s; applyChart(); }
+function applyChart() {
+  curSym = ($('chart-symbol').value||'').trim().toUpperCase() || 'NASDAQ:AAPL';
+  renderChartPane(curChartTab, $(curChartTab+'-pane'));
+}
+
+function switchChartTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  ['chart','tech','fund','cnews'].forEach(t => {
+    const p=$(t+'-pane');
+    if(p) p.classList.toggle('hidden', t!==tab);
+  });
+  curChartTab = tab;
+  renderChartPane(tab, $(tab+'-pane'));
+}
+
+function renderChartPane(tab, container) {
+  if(!container) return;
+  container.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'tradingview-widget-container';
+  const w = document.createElement('div');
+  w.className = 'tradingview-widget-container__widget';
+  wrap.appendChild(w);
+  const s = document.createElement('script');
+  s.async = true;
+  const cfgs = {
+    chart: { src:'advanced-chart', cfg:{ autosize:true, symbol:curSym, interval:'D', timezone:'Europe/Prague', theme:'dark', style:'1', locale:'cs', allow_symbol_change:true, backgroundColor:'rgba(13,17,23,0)', isTransparent:true, height:560 } },
+    tech:  { src:'technical-analysis', cfg:{ interval:'1W', width:'100%', isTransparent:true, height:700, symbol:curSym, showIntervalTabs:true, locale:'cs', colorTheme:'dark', displayMode:'multiple', largeChartUrl:'' } },
+    fund:  { src:'financials', cfg:{ isTransparent:true, displayMode:'regular', width:'100%', height:500, colorTheme:'dark', symbol:curSym, locale:'cs' } },
+    cnews: { src:'timeline', cfg:{ feedMode:'symbol', symbol:curSym, isTransparent:true, displayMode:'regular', width:'100%', height:500, colorTheme:'dark', locale:'en' } }
+  };
+  const { src, cfg } = cfgs[tab] || cfgs.chart;
+  s.src = `https://s3.tradingview.com/external-embedding/embed-widget-${src}.js`;
+  s.text = JSON.stringify(cfg);
+  wrap.appendChild(s);
+  container.appendChild(wrap);
+}
+
+// ══════════════════════════════════════════════════
+// SCREENER
+// ══════════════════════════════════════════════════
+[
+  {tk:'BRK-B',nm:'Berkshire Hathaway',pe:14.2,pb:1.4,peg:0.8,eps:'+11%',score:91},
+  {tk:'JNJ', nm:'Johnson & Johnson',  pe:15.8,pb:1.7,peg:0.9,eps:'+8%', score:88},
+  {tk:'CVX', nm:'Chevron',            pe:12.3,pb:1.9,peg:0.7,eps:'+15%',score:84},
+  {tk:'PFE', nm:'Pfizer',             pe:11.2,pb:1.5,peg:0.8,eps:'+6%', score:75},
+  {tk:'VZ',  nm:'Verizon',            pe:9.1, pb:1.6,peg:0.6,eps:'+4%', score:72},
+].forEach(r => {
+  const col = r.score>80?'var(--gn)':'var(--ac)';
+  $('screener-body').innerHTML += `<tr onclick="setQuickStock('${r.tk}')">
+    <td><strong style="font-family:'Syne',sans-serif;font-size:14px">${r.tk}</strong><div style="font-size:11px;color:var(--t2);font-family:'DM Sans',sans-serif">${r.nm}</div></td>
+    <td class="mono">${r.pe}</td><td class="mono">${r.pb}</td>
+    <td class="mono" style="color:${r.peg<1?'var(--gn)':'var(--tx)'}">${r.peg}</td>
+    <td class="mono" style="color:var(--gn)">${r.eps}</td>
+    <td><div style="display:flex;align-items:center;gap:5px">
+      <div style="width:32px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden"><div style="width:${r.score}%;height:100%;background:${col}"></div></div>
+      <span style="color:${col};font-size:12px">${r.score}</span>
+    </div></td>
+  </tr>`;
+});
+
+function setQuickStock(t) {
+  $('stock-input').value = t;
+  analyzeStock();
+}
+
+async function analyzeStock() {
+  const tk = ($('stock-input').value||'').trim().toUpperCase();
+  if (!tk) return;
+  const btn = $('analyze-btn');
+  btn.disabled = true;
+  show('stock-loading');
+  hide('stock-result');
+  try {
+    const text = await callClaude([{
+      role:'user',
+      content:
+        'Proveď MAXIMÁLNĚ PODROBNOU a KOMPLEXNÍ analýzu akcie/ETF/aktiva: ' + tk + '\n\n' +
+        '## 1. Popis firmy/aktiva\n- Co firma dělá, obchodní model, jak vydělává peníze (každý revenue stream)\n- Historie, kdy founded, klíčové milníky\n- Pozice na trhu a konkurenční výhoda (moat) — detailně\n- Geografie příjmů a zákazníci\n- Management team — klíčové osoby\n\n' +
+        '## 2. Finanční metriky — s konkrétními čísly\n- P/E ratio s kontextem (vs. sektor průměr, vs. historický průměr)\n- P/B, P/S, EV/EBITDA, PEG ratio\n- Marže: hrubá, operační, čistá EBITDA (posledních 5 let, trend)\n- Růst tržeb (5Y CAGR) a EPS growth\n- Dluh: D/E ratio, net debt/EBITDA, úrokové krytí\n- Free Cash Flow yield a FCF margin\n- ROE, ROA, ROIC vs. WACC\n- Dividenda (pokud existuje): yield, payout ratio, growth\n\n' +
+        '## 3. LONG teze — proč koupit\n- Min. 6 konkrétních důvodů s čísly a daty\n- Katalyzátory růstu v horizontu 6M / 1-2 roky / 3-5 let\n- Komparativní výhoda vs. přímí konkurenti\n- TAM (Total Addressable Market) a penetrace trhu\n\n' +
+        '## 4. SHORT teze — rizika a bear case\n- Min. 6 konkrétních rizik s odhadem dopadu\n- Co může selhat v bull case\n- Regulatorní, makro, konkurenční, technologické hrozby\n- Historické případy kdy podobné firmy selhaly\n\n' +
+        '## 5. Ocenění — je cena spravedlivá?\n- Srovnání s 3-5 konkrétními peery (uveď firmy a jejich metriky)\n- Je akcie drahá nebo levná vs. historický průměr?\n- Jednoduchý DCF odhad fair value s předpoklady\n- Analyst consensus price target (pokud znáš)\n- Margin of safety výpočet\n\n' +
+        '## 6. Technická analýza + sentiment\n- Kde se cena pohybuje vs. 52W high/low\n- Klíčové supportní/resistanční úrovně\n- Short interest, insider buying/selling trendy\n- Institucionální ownership\n\n' +
+        '## 7. Doporučení\n- Pro jaký typ investora je vhodné (konzerva / growth / spekulant)\n- Doporučený investiční horizont s odůvodněním\n- Jak velká pozice v portfoliu je rozumná (% alokace)\n- Vstupní strategie (jednorázově vs. DCA, cenové úrovně)\n- Stop-loss a take-profit úrovně\n\n' +
+        '## 8. Doporučené zdroje pro hlubší research\n- Kde najít nejlepší data a analýzy k tomuto aktivu\n- Klíčové dokumenty k přečtení (10-K, investor day, atd.)\n- Analytici / podcasy / YouTube kanály zaměřené na toto aktivum\n- 2-3 doporučené knihy o podobném typu investice\n\n' +
+        'Buď MAXIMÁLNĚ konkrétní, používej čísla. Na konci upozorni, že nejde o finanční poradenství.'
+    }],
+    'Jsi senior investiční analytik — kombinace sell-side analytika z Goldman Sachs, hedge fund manažera a bestseller autora investičních knih. ' +
+    'Tvé analýzy jsou LEGENDÁRNÍ svou hloubkou a přesností. Nikdy nepíšeš obecné věci — vždy konkrétní čísla, data, příklady. ' +
+    'Strukturuješ jasně, používáš Markdown headingy. Odpovídáš česky.',
+    5000);
+    showAI('stock-result', text);
+  } catch(e) {
+    showErr('stock-result', e.message);
+  }
+  hide('stock-loading');
+  btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════
+// WATCHLIST (Dashboard)
+// ══════════════════════════════════════════════════
+const WL_DEFAULT = [
+  { ticker:'AAPL',    label:'Apple' },
+  { ticker:'NVDA',    label:'Nvidia' },
+  { ticker:'MSFT',    label:'Microsoft' },
+  { ticker:'BITSTAMP:BTCUSD', label:'Bitcoin', noYahoo:true, tvOnly:true, price:null },
+  { ticker:'GC=F',    label:'Gold' },
+  { ticker:'EURUSD=X',label:'EUR/USD' },
+  { ticker:'USDCZK=X',label:'USD/CZK' },
+];
+let watchlist = JSON.parse(localStorage.getItem('iq_wl') || 'null') || WL_DEFAULT;
+function saveWL() { localStorage.setItem('iq_wl', JSON.stringify(watchlist)); }
+
+function openWlEdit() {
+  document.getElementById('wl-edit').classList.remove('hidden');
+  renderWlEditList();
+}
+function closeWlEdit() {
+  document.getElementById('wl-edit').classList.add('hidden');
+}
+function renderWlEditList() {
+  const el = document.getElementById('wl-edit-list');
+  if (!watchlist.length) { el.innerHTML = '<div style="color:var(--t3);font-size:12px">Watchlist je prázdný.</div>'; return; }
+  el.innerHTML = watchlist.map((w,i) =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd)">' +
+    '<span style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--ac)">' + esc(w.ticker) + '</span>' +
+    '<span style="font-size:12px;color:var(--t2)">' + esc(w.label||'') + '</span>' +
+    '<button onclick="removeWlItem(' + i + ')" style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--rd);border-radius:5px;padding:2px 8px;cursor:pointer;font-size:11px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+function addWlItem() {
+  const tk = (document.getElementById('wl-inp').value||'').trim().toUpperCase();
+  const lb = (document.getElementById('wl-label').value||'').trim() || tk;
+  if (!tk) return;
+  watchlist.push({ ticker: tk, label: lb });
+  saveWL();
+  document.getElementById('wl-inp').value='';
+  document.getElementById('wl-label').value='';
+  renderWlEditList();
+  refreshWatchlist();
+}
+function removeWlItem(i) {
+  watchlist.splice(i,1);
+  saveWL();
+  renderWlEditList();
+  refreshWatchlist();
+}
+
+async function refreshWatchlist() {
+  const el = document.getElementById('wl-table');
+  const ld = document.getElementById('wl-loading');
+  if (ld) ld.classList.remove('hidden');
+  if (!watchlist.length) {
+    if (ld) ld.classList.add('hidden');
+    el.innerHTML = '<div style="color:var(--t3);font-size:13px;padding:10px 0">Watchlist je prázdný — klikni ✏️ Upravit.</div>';
+    return;
+  }
+  const prices = await Promise.all(watchlist.map(w => w.tvOnly ? Promise.resolve(null) : fetchRealPrice(w.ticker)));
+  if (ld) ld.classList.add('hidden');
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse">' +
+    watchlist.map((w,i) => {
+      const p = prices[i];
+      const decimals = w.ticker.includes('JPY') ? 2 : w.ticker.includes('=X') ? 4 : w.ticker.includes('BTC') ? 0 : 2;
+      const pStr = p !== null ? '$' + p.toLocaleString('en-US',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}) : '<span style="color:var(--t3)">—</span>';
+      return '<tr style="border-bottom:1px solid rgba(37,45,58,.4)">' +
+        '<td style="padding:10px 8px;font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px;color:var(--tx)">' + esc(w.ticker) + '</td>' +
+        '<td style="padding:10px 8px;font-size:12px;color:var(--t2);font-family:\'DM Sans\',sans-serif">' + esc(w.label) + '</td>' +
+        '<td style="padding:10px 8px;font-family:\'DM Mono\',monospace;font-size:14px;color:var(--ac);text-align:right">' + pStr + '</td>' +
+        '<td style="padding:10px 8px;text-align:right"><a href="https://finance.yahoo.com/quote/' + encodeURIComponent(w.ticker) + '" target="_blank" style="color:var(--t3);font-size:10px;font-family:\'DM Mono\',monospace;text-decoration:none">↗</a></td>' +
+        '</tr>';
+    }).join('') + '</table>';
+}
+
+// ══════════════════════════════════════════════════
+// EXCHANGE RATES & CURRENCY
+// ══════════════════════════════════════════════════
+const CURRENCY_TICKERS = { CZK:'USDCZK=X', EUR:'EURUSD=X', GBP:'GBPUSD=X', JPY:'USDJPY=X', CHF:'USDCHF=X', USD:null };
+let currentCurrency = localStorage.getItem('iq_currency') || 'CZK';
+let usdToLocal = 1; // rate: 1 USD = X local
+
+async function fetchExchangeRate() {
+  const cur = document.getElementById('pf-currency')?.value || currentCurrency;
+  const ticker = CURRENCY_TICKERS[cur];
+  if (!ticker) { usdToLocal = 1; updateCurrencyDisplay(cur, 1); return; }
+  try {
+    let rate = await fetchRealPrice(ticker);
+    if (!rate) throw new Error('no rate');
+    // EURUSD=X is inverted (USD per EUR), GBPUSD=X too — convert to USD→local
+    if (cur === 'EUR') rate = 1 / rate;
+    if (cur === 'GBP') rate = 1 / rate;
+    usdToLocal = rate;
+    updateCurrencyDisplay(cur, rate);
+  } catch {
+    usdToLocal = cur === 'CZK' ? 23.5 : cur === 'EUR' ? 0.93 : cur === 'GBP' ? 0.79 : cur === 'JPY' ? 149 : cur === 'CHF' ? 0.89 : 1;
+    updateCurrencyDisplay(cur, usdToLocal);
+  }
+}
+
+function updateCurrencyDisplay(cur, rate) {
+  const el = document.getElementById('pf-rate-display');
+  if (el) el.textContent = '1 USD = ' + rate.toFixed(cur==='JPY'?1:4) + ' ' + cur;
+  const lbl = document.getElementById('pf-local-label');
+  const hdr = document.getElementById('pf-local-col-hdr');
+  if (lbl) lbl.textContent = 'P&L (' + cur + ')';
+  if (hdr) hdr.textContent = 'P&L (' + cur + ')';
+}
+
+function onCurrencyChange() {
+  const cur = document.getElementById('pf-currency').value;
+  currentCurrency = cur;
+  localStorage.setItem('iq_currency', cur);
+  fetchExchangeRate().then(() => renderPortfolio());
+}
+
+// ══════════════════════════════════════════════════
+// PORTFOLIO
+// ══════════════════════════════════════════════════
+let pf = JSON.parse(localStorage.getItem('iq_pf') || '[]');
+function savePF() { localStorage.setItem('iq_pf', JSON.stringify(pf)); }
+
+function pfMsg(msg, color) {
+  const e=document.getElementById('pf-msg');
+  e.textContent=msg; e.style.color=color;
+  e.classList.remove('hidden');
+  setTimeout(()=>e.classList.add('hidden'),3000);
+}
+
+function addPosition() {
+  const tk  = (document.getElementById('pf-ticker').value||'').trim().toUpperCase();
+  const sh  = parseFloat(document.getElementById('pf-shares').value);
+  const pr  = parseFloat(document.getElementById('pf-price').value);
+  const cur = document.getElementById('pf-buy-currency').value;
+  const nt  = (document.getElementById('pf-note').value||'').trim();
+  if (!tk) { pfMsg('Zadej ticker!','var(--rd)'); return; }
+  if (!sh||sh<=0) { pfMsg('Zadej počet kusů!','var(--rd)'); return; }
+  if (!pr||pr<=0) { pfMsg('Zadej nákupní cenu!','var(--rd)'); return; }
+  // Convert buy price to USD for uniform P&L
+  let buyPriceUSD = pr;
+  if (cur === 'CZK') buyPriceUSD = pr / usdToLocal;
+  else if (cur === 'EUR') buyPriceUSD = pr / (1/usdToLocal); // rough
+  // Just store original + currency, convert dynamically
+  pf.push({ id:Date.now(), ticker:tk, shares:sh, buyPrice:pr, buyCurrency:cur, note:nt });
+  savePF(); renderPortfolio();
+  document.getElementById('pf-ticker').value='';
+  document.getElementById('pf-shares').value='';
+  document.getElementById('pf-price').value='';
+  document.getElementById('pf-note').value='';
+  pfMsg('✓ ' + tk + ' přidán','var(--gn)');
+}
+
+function removePos(id) { pf=pf.filter(p=>p.id!==id); savePF(); renderPortfolio(); }
+function clearPortfolio() { if(!confirm('Smazat celé portfolio?')) return; pf=[]; savePF(); renderPortfolio(); }
+
+function importPortfolio() {
+  const raw = (document.getElementById('pf-import').value||'').trim();
+  if (!raw) return;
+  let added = 0;
+  raw.split(/[\n,]+/).forEach(line => {
+    const p = line.trim().split(/\s+/);
+    if (p.length >= 3) {
+      const tk=p[0].toUpperCase(), sh=parseFloat(p[1]), pr=parseFloat(p[2]), cur=p[3]||'USD';
+      if (tk&&sh>0&&pr>0) { pf.push({id:Date.now()+Math.random(),ticker:tk,shares:sh,buyPrice:pr,buyCurrency:cur,note:''}); added++; }
+    }
+  });
+  savePF(); renderPortfolio();
+  document.getElementById('pf-import').value='';
+  pfMsg('✓ Importováno ' + added + ' pozic','var(--gn)');
+}
+
+// ══════════════════════════════════════════════════
+async function renderPortfolio() {
+  const countEl = document.getElementById('pf-count');
+  if (countEl) countEl.textContent = pf.length;
+  if (!pf.length) {
+    document.getElementById('pf-empty')?.classList.remove('hidden');
+    document.getElementById('pf-table')?.classList.add('hidden');
+    ['pf-total-val','pf-total-cost','pf-pnl','pf-pnl-pct','pf-pnl-local','pf-val-local','pf-best','pf-best-pct'].forEach(id => {
+      const e=document.getElementById(id); if(e) e.textContent='—';
+    });
+    return;
+  }
+  document.getElementById('pf-empty')?.classList.add('hidden');
+  document.getElementById('pf-table')?.classList.remove('hidden');
+  const cur = currentCurrency;
+  const rate = usdToLocal;
+  const curSym = { USD:'$', EUR:'€', GBP:'£', JPY:'¥', CZK:'Kč', CHF:'Fr.' }[cur] || cur;
+
+  // Skeleton rows
+  document.getElementById('pf-tbody').innerHTML = pf.map(p =>
+    '<tr id="pfrow-' + p.id + '">' +
+    '<td><strong style="font-family:\'Syne\',sans-serif;font-size:13px">' + esc(p.ticker) + '</strong>' +
+    (p.note ? '<div style="font-size:10px;color:var(--t2)">' + esc(p.note) + '</div>' : '') +
+    '<a href="https://finance.yahoo.com/quote/' + encodeURIComponent(p.ticker) + '" target="_blank" style="font-size:10px;color:var(--ac);font-family:\'DM Mono\',monospace;text-decoration:none">↗ Yahoo</a></td>' +
+    '<td class="mono">' + p.shares + '</td>' +
+    '<td class="mono">' + p.buyPrice.toFixed(2) + ' ' + (p.buyCurrency||'USD') + '</td>' +
+    '<td class="mono" style="color:var(--t2)"><div class="spin" style="width:10px;height:10px;border-width:1.5px;display:inline-block"></div></td>' +
+    '<td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td>' +
+    '<td style="color:var(--t2);font-size:12px">' + esc(p.note||'') + '</td>' +
+    '<td><button class="btn b-danger" style="padding:3px 7px;font-size:11px" onclick="removePos(' + p.id + ')">✕</button></td>' +
+    '</tr>'
+  ).join('');
+
+  const prices = await Promise.all(pf.map(p => fetchRealPrice(p.ticker)));
+
+  let tv=0, tc=0, bestP=-Infinity, bestT='';
+  pf.forEach((p,i) => {
+    const cp = prices[i];
+    const row = document.getElementById('pfrow-' + p.id);
+    if (!row) return;
+
+    // Convert buy price to USD
+    let buyUSD = p.buyPrice;
+    if ((p.buyCurrency||'USD') !== 'USD') {
+      // Use current rate as approximation for conversion
+      const bRate = CURRENCY_TICKERS[p.buyCurrency||'USD'];
+      if (p.buyCurrency === 'CZK') buyUSD = p.buyPrice / rate;
+      else if (p.buyCurrency === 'EUR') buyUSD = p.buyPrice / 0.93;
+      else if (p.buyCurrency === 'GBP') buyUSD = p.buyPrice / 0.79;
+    }
+    const cost = p.shares * buyUSD;
+    tc += cost;
+
+    const tds = row.querySelectorAll('td');
+    if (cp !== null) {
+      const val = p.shares * cp;
+      const pnl = val - cost;
+      const pct = (pnl / cost) * 100;
+      const pnlLocal = pnl * rate;
+      const valLocal = val * rate;
+      tv += val;
+      if (pct > bestP) { bestP=pct; bestT=p.ticker; }
+      const col = pnl>=0?'var(--gn)':'var(--rd)';
+      const sg  = pnl>=0?'+':'';
+      tds[3].innerHTML = '<span style="color:var(--ac)">$' + cp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</span>';
+      tds[4].textContent = '$' + val.toLocaleString('en-US',{maximumFractionDigits:0});
+      tds[5].innerHTML = '<span style="color:' + col + '">' + sg + '$' + Math.abs(pnl).toLocaleString('en-US',{maximumFractionDigits:0}) + '</span>';
+      tds[6].innerHTML = '<span style="color:' + col + ';font-weight:600">' + sg + pct.toFixed(2) + '%</span>';
+      tds[7].innerHTML = '<span style="color:' + col + '">' + sg + pnlLocal.toLocaleString('cs-CZ',{maximumFractionDigits:0}) + ' ' + curSym + '</span>';
+    } else {
+      tds[3].innerHTML = '<span style="color:var(--t3);font-size:11px">N/A</span>';
+      tds[4].textContent='—'; tds[5].textContent='—'; tds[6].textContent='—'; tds[7].textContent='—';
+    }
+  });
+
+  const tp = tv-tc, tpPct = tc>0?(tp/tc)*100:0;
+  const col = tp>=0?'var(--gn)':'var(--rd)', sg=tp>=0?'+':'';
+  const tpLocal = tp * rate, tvLocal = tv * rate;
+  const tvEl=document.getElementById('pf-total-val'); if(tvEl) tvEl.textContent='$'+tv.toLocaleString('en-US',{maximumFractionDigits:0});
+  const tcEl=document.getElementById('pf-total-cost'); if(tcEl) tcEl.textContent='$'+tc.toLocaleString('en-US',{maximumFractionDigits:0});
+  const pnlEl=document.getElementById('pf-pnl'); if(pnlEl){pnlEl.textContent=sg+'$'+Math.abs(tp).toLocaleString('en-US',{maximumFractionDigits:0});pnlEl.style.color=col;}
+  const pctEl=document.getElementById('pf-pnl-pct'); if(pctEl){pctEl.textContent=sg+tpPct.toFixed(2)+'%';pctEl.style.color=col;}
+  const locEl=document.getElementById('pf-pnl-local'); if(locEl){locEl.textContent=sg+tpLocal.toLocaleString('cs-CZ',{maximumFractionDigits:0})+' '+curSym;locEl.style.color=col;}
+  const valLocEl=document.getElementById('pf-val-local'); if(valLocEl) valLocEl.textContent='Hodnota: '+tvLocal.toLocaleString('cs-CZ',{maximumFractionDigits:0})+' '+curSym;
+  const bestEl=document.getElementById('pf-best'); if(bestEl) bestEl.textContent=bestT||'—';
+  const bestPctEl=document.getElementById('pf-best-pct'); if(bestPctEl) bestPctEl.textContent=bestP>-Infinity?(bestP>=0?'+':'')+bestP.toFixed(2)+'%':'—';
+}
+
+
+
+async function analyzePortfolio() {
+  if (!pf.length) { alert('Přidej nejprve pozice.'); return; }
+  document.getElementById('pf-ai-btn').disabled = true;
+  show('pf-ai-loading'); hide('pf-ai-result'); hide('pf-ai-hint');
+  const cur = currentCurrency;
+  const sum = pf.map(p => p.ticker + ': ' + p.shares + 'x @ ' + p.buyPrice + ' ' + (p.buyCurrency||'USD') + (p.note?' ('+p.note+')':'')).join('\n');
+  try {
+    const text = await callClaude([{role:'user',content:
+      'Proveď MAXIMÁLNĚ PODROBNOU a KOMPLEXNÍ analýzu tohoto portfolia investora z České republiky:\n\n' +
+      sum + '\n\nDomácí měna: ' + cur + '\n\n' +
+      '## 1. Celkové hodnocení portfolia\n- Stručné shrnutí co vidíš\n- Celková kvalita portfolia (1-10) s odůvodněním každého bodu\n- Porovnání s "ideálním" portfoliem pro investora z ČR\n\n' +
+      '## 2. Diverzifikace — detailní rozbor\n- Přesná analýza diverzifikace podle sektorů (% každého sektoru, co chybí, co je přetíženo)\n- Geografická diverzifikace: US/EU/EM/CZ exposure v %\n- Diverzifikace podle tříd aktiv (akcie/dluhopisy/komodity/cash)\n- Korelační analýza: co se pohybuje stejně a proč je to problém\n- Jak to porovnat s doporučením od Ray Dalio / Harry Browne / Swensen\n\n' +
+      '## 3. Koncentrační rizika\n- Které pozice jsou příliš velké (>10% portfolia) a proč je to riziko\n- Sektorová koncentrace s čísly\n- Jak snížit riziko konkrétními kroky bez ztráty výnosového potenciálu\n\n' +
+      '## 4. Měnové riziko — detailní výpočet\n- Přesná CZK/USD/EUR/GBP expozice v %\n- Výpočet: pokud CZK posílí o 10%, jak to ovlivní každou pozici a celkové portfolio?\n- Výpočet: pokud USD oslabí o 15% vs CZK, jaký je dopad?\n- Konkrétní hedging strategie (forex futures, ETF, přirozený hedge)\n- Jak to dělají čeští investoři v hedge fondech\n\n' +
+      '## 5. Analýza každé pozice\n- Pro každý ticker: potenciál, riziko, fundamenty (kde znáš), doporučení\n- Je cada pozice ve správné velikosti?\n\n' +
+      '## 6. Navrhované změny — konkrétní akční kroky\n- Co prodat, kdy a proč (konkrétní důvody)\n- Co přikoupit a proč (s odůvodněním a celovým přidáním k portfoliu)\n- Co přidat nového (min. 5 konkrétní tickery s odůvodněním)\n- Prioritizace změn (co udělat první)\n\n' +
+      '## 7. Rebalancing plán\n- Cílová alokace pro investora z ČR s tvým zdůvodněním\n- Konkrétní kroky jak dosáhnout cílové alokace\n- Trigger events pro rebalancing\n- Daňové aspekty rebalancingu v ČR\n\n' +
+      '## 8. Výkonnostní benchmark\n- S čím porovnat toto portfolio (S&P 500, MSCI World, 60/40)\n- Jak pravděpodobně performuje vs. tyto benchmarky\n\n' +
+      '## 9. Doporučená literatura pro správu portfolia\n- Min. 5 konkrétních knih s popisem proč je číst\n- Weby a nástroje pro monitoring portfolia\n- Podcasty zaměřené na portfolio management\n\n' +
+      'Buď maximálně konkrétní. Na konci upozorni, že nejde o finanční poradenství.'
+    }],
+    'Jsi elitní portfolio manažer: kombinace CFA charterholder + certified financial planner specializující se na retail investory z EU/ČR. ' +
+    'Tvé analýzy jsou LEGENDÁRNĚ PODROBNÉ. Používáš konkrétní čísla, výpočty, příklady. Nikdy nepíšeš obecnosti. Odpovídáš česky.',
+    5000);
+    showAI('pf-ai-result', text);
+  } catch(e) { showErr('pf-ai-result', e.message); }
+  hide('pf-ai-loading');
+  document.getElementById('pf-ai-btn').disabled = false;
+}
+
+
+// ══════════════════════════════════════════════════
+// VÝNOSOVÁ KŘIVKA — US Treasury yields
+// ══════════════════════════════════════════════════
+const YIELD_MATURITIES = [
+  { label:'3M',  ticker:'^IRX',  stooq:'us3mt' },
+  { label:'2Y',  ticker:'US2YT=RR', stooq:'us2yt' },
+  { label:'5Y',  ticker:'^FVX',  stooq:'us5yt' },
+  { label:'10Y', ticker:'^TNX',  stooq:'us10yt' },
+  { label:'30Y', ticker:'^TYX',  stooq:'us30yt' },
+];
+
+async function fetchYield(m) {
+  // Try Yahoo first
+  const yk = normalizeYahooTicker(m.ticker);
+  for (const proxy of ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?']) {
+    try {
+      const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(yk) + '?interval=1d&range=5d';
+      const r = await fetch(proxy + encodeURIComponent(url));
+      if (!r.ok) continue;
+      const j = await r.json();
+      const meta = j?.chart?.result?.[0]?.meta;
+      if (meta?.regularMarketPrice > 0) {
+        const price = meta.regularMarketPrice;
+        const prev  = meta.chartPreviousClose || meta.previousClose || price;
+        return { yield: price, chg: prev > 0 ? ((price - prev) / prev) * 100 : null };
+      }
+    } catch(e) {}
+  }
+  // Stooq fallback
+  try {
+    const url = 'https://stooq.com/q/l/?s=' + encodeURIComponent(m.stooq) + '&f=sd2t2ohlcv&h&e=csv';
+    const r = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+    if (r.ok) {
+      const text = await r.text();
+      const parts = text.trim().split('\n')[1]?.split(',');
+      if (parts && parts.length >= 5) {
+        const close = parseFloat(parts[4]);
+        const open  = parseFloat(parts[2]);
+        if (close > 0) return { yield: close, chg: open > 0 ? ((close - open) / open) * 100 : null };
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function loadYieldCurve() {
+  const loadEl = document.getElementById('yc-loading');
+  const statEl = document.getElementById('yc-status');
+  const tableEl = document.getElementById('yc-table');
+  const chartEl = document.getElementById('yc-chart');
+  const sigEl   = document.getElementById('yc-signal');
+  if (loadEl) loadEl.classList.remove('hidden');
+  if (statEl) statEl.textContent = 'Načítám...';
+
+  const results = await Promise.all(YIELD_MATURITIES.map(fetchYield));
+  if (loadEl) loadEl.classList.add('hidden');
+
+  const yields = YIELD_MATURITIES.map((m, i) => ({ ...m, data: results[i] }));
+  const valid  = yields.filter(y => y.data?.yield);
+
+  // Table
+  tableEl.innerHTML = '<table class="tbl" style="width:100%"><thead><tr><th>Splatnost</th><th>Výnos %</th><th>Změna</th><th>Vizuál</th></tr></thead><tbody>' +
+    yields.map(y => {
+      if (!y.data) return '<tr><td><strong style="font-family:\'DM Mono\',monospace">' + y.label + '</strong></td><td colspan="3" style="color:var(--t3)">N/A</td></tr>';
+      const yld = y.data.yield.toFixed(3);
+      const chg = y.data.chg;
+      const chgStr = chg !== null ? (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%' : '—';
+      const chgCol = !chg ? 'var(--t3)' : chg >= 0 ? 'var(--rd)' : 'var(--gn)'; // yield up = bond price down = red for bond holders
+      const barW = Math.min(100, (y.data.yield / 6) * 100);
+      const barCol = y.data.yield > 4.5 ? 'var(--rd)' : y.data.yield > 3 ? 'var(--or)' : 'var(--gn)';
+      return '<tr><td><strong style="font-family:\'DM Mono\',monospace;color:var(--ac)">' + y.label + '</strong></td>' +
+        '<td style="font-family:\'DM Mono\',monospace;font-size:15px;font-weight:600;color:var(--tx)">' + yld + '%</td>' +
+        '<td style="font-family:\'DM Mono\',monospace;font-size:12px;color:' + chgCol + '">' + chgStr + '</td>' +
+        '<td><div style="background:var(--s3);border-radius:3px;height:6px;width:80px"><div style="height:100%;width:' + barW + '%;background:' + barCol + ';border-radius:3px"></div></div></td></tr>';
+    }).join('') + '</tbody></table>';
+
+  // SVG yield curve chart
+  if (valid.length >= 2) {
+    const W = 300, H = 90, pad = 30;
+    const ys = valid.map(y => y.data.yield);
+    const min = Math.min(...ys) - 0.2, max = Math.max(...ys) + 0.2;
+    const xScale = i => pad + (i / (valid.length - 1)) * (W - pad * 2);
+    const yScale = v => H - pad - ((v - min) / (max - min)) * (H - pad * 2);
+    const pts = valid.map((y, i) => xScale(i) + ',' + yScale(y.data.yield)).join(' ');
+    const pathD = valid.map((y, i) => (i === 0 ? 'M' : 'L') + xScale(i) + ' ' + yScale(y.data.yield)).join(' ');
+
+    // Check inversion
+    const y2 = valid.find(y => y.label === '2Y');
+    const y10 = valid.find(y => y.label === '10Y');
+    const inverted = y2 && y10 && y2.data.yield > y10.data.yield;
+    const spread = y2 && y10 ? (y10.data.yield - y2.data.yield).toFixed(3) : null;
+
+    const curveColor = inverted ? '#ff4757' : '#00d4ff';
+    chartEl.innerHTML = '<div style="margin-bottom:4px;font-size:10px;color:var(--t3);font-family:\'DM Mono\',monospace">VÝNOSOVÁ KŘIVKA</div>' +
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-height:90px">' +
+      '<path d="' + pathD + '" fill="none" stroke="' + curveColor + '" stroke-width="2.5" stroke-linejoin="round"/>' +
+      valid.map((y, i) => '<circle cx="' + xScale(i) + '" cy="' + yScale(y.data.yield) + '" r="3.5" fill="' + curveColor + '"/>' +
+        '<text x="' + xScale(i) + '" y="' + (H - 5) + '" text-anchor="middle" fill="var(--t2)" font-size="8" font-family="DM Mono,monospace">' + y.label + '</text>' +
+        '<text x="' + xScale(i) + '" y="' + (yScale(y.data.yield) - 7) + '" text-anchor="middle" fill="var(--tx)" font-size="8" font-family="DM Mono,monospace">' + y.data.yield.toFixed(2) + '</text>'
+      ).join('') +
+      '</svg>';
+
+    // Signal
+    sigEl.innerHTML = inverted
+      ? '<div style="padding:10px 12px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);border-radius:8px;font-size:12px">' +
+        '<strong style="color:var(--rd)">⚠️ INVERZNÍ KŘIVKA</strong> — 2Y (' + y2.data.yield.toFixed(2) + '%) > 10Y (' + y10.data.yield.toFixed(2) + '%) · Spread: <span style="color:var(--rd)">' + spread + '%</span>' +
+        '<div style="font-size:11px;color:var(--t2);margin-top:4px;font-family:\'DM Mono\',monospace">Historicky předchází recesi o 12–18 měsíců. Fed pravděpodobně sníží sazby.</div></div>'
+      : '<div style="padding:10px 12px;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.2);border-radius:8px;font-size:12px">' +
+        '<strong style="color:var(--gn)">✓ NORMÁLNÍ KŘIVKA</strong>' +
+        (spread ? ' — 2Y/10Y spread: <span style="color:var(--gn)">' + spread + '%</span>' : '') +
+        '<div style="font-size:11px;color:var(--t2);margin-top:4px;font-family:\'DM Mono\',monospace">Strmá křivka signalizuje růstová očekávání a zdravé úvěrové podmínky.</div></div>';
+  }
+
+  if (statEl) {
+    statEl.textContent = 'LIVE · ' + new Date().toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+    statEl.className = 'bdg b-gn';
+  }
+  clearTimeout(window._ycTimer);
+  window._ycTimer = setTimeout(loadYieldCurve, 120000);
+}
+
+// ══════════════════════════════════════════════════
+// VIX KARTA — volatilita + fear/greed
+// ══════════════════════════════════════════════════
+const VIX_INDICATORS = [
+  { ticker:'^VIX',   label:'VIX (30D impl. vol.)',  icon:'😨' },
+  { ticker:'^VIX9D', label:'VIX9D (9D)',             icon:'⚡' },
+  { ticker:'^VIX3M', label:'VIX3M (3M)',             icon:'📅' },
+  { ticker:'^VVIX',  label:'VVIX (vol of vol)',      icon:'🌀' },
+  { ticker:'^MOVE',  label:'MOVE (Bond vol.)',        icon:'📋' },
+];
+
+async function loadVixTable() {
+  const loadEl = document.getElementById('vix-loading');
+  const statEl = document.getElementById('vix-status');
+  const tableEl = document.getElementById('vix-table');
+  if (!tableEl) return;
+  if (loadEl) loadEl.classList.remove('hidden');
+
+  const results = await Promise.all(VIX_INDICATORS.map(v => fetchPriceWithChange(v.ticker)));
+  if (loadEl) loadEl.classList.add('hidden');
+
+  const vixVal = results[0]?.price || null;
+  let fearLabel = '', fearColor = '', fearWidth = 50;
+  if (vixVal) {
+    if (vixVal < 12)       { fearLabel = 'Extrémní chamtivost'; fearColor = 'var(--gn)'; fearWidth = 90; }
+    else if (vixVal < 17)  { fearLabel = 'Chamtivost';          fearColor = '#86efac';   fearWidth = 70; }
+    else if (vixVal < 20)  { fearLabel = 'Neutrální';           fearColor = 'var(--ac)'; fearWidth = 50; }
+    else if (vixVal < 28)  { fearLabel = 'Strach';              fearColor = 'var(--or)'; fearWidth = 30; }
+    else if (vixVal < 40)  { fearLabel = 'Velký strach';        fearColor = 'var(--rd)'; fearWidth = 15; }
+    else                   { fearLabel = 'Extrémní strach';     fearColor = '#be123c';   fearWidth = 5;  }
+  }
+
+  let html = '';
+  // Fear/greed meter
+  if (vixVal) {
+    html += '<div style="margin-bottom:12px;padding:10px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+      '<span style="font-size:12px;color:var(--t2);font-family:\'DM Mono\',monospace">Strach / Chamtivost</span>' +
+      '<span style="font-size:14px;font-weight:700;font-family:\'Syne\',sans-serif;color:' + fearColor + '">' + fearLabel + '</span></div>' +
+      '<div style="background:linear-gradient(to right,#be123c,var(--rd),var(--or),var(--ac),var(--gn));border-radius:6px;height:8px;position:relative">' +
+      '<div style="position:absolute;top:-4px;left:' + fearWidth + '%;transform:translateX(-50%);width:16px;height:16px;background:white;border-radius:50%;border:3px solid var(--s1);box-shadow:0 0 6px rgba(0,0,0,.5)"></div></div>' +
+      '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--t3);font-family:\'DM Mono\',monospace"><span>Extr. strach</span><span>Neutrální</span><span>Extr. chamtivost</span></div></div>';
+  }
+
+  VIX_INDICATORS.forEach((v, i) => {
+    const p = results[i]?.price;
+    const chg = results[i]?.chg;
+    if (!p) return;
+    const chgStr = chg !== null ? (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%' : '';
+    const chgCol = !chg ? 'var(--t3)' : chg >= 0 ? 'var(--rd)' : 'var(--gn)'; // VIX up = bad = red
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(37,45,58,.3)">' +
+      '<div style="display:flex;align-items:center;gap:8px"><span>' + v.icon + '</span>' +
+      '<span style="font-size:12px;color:var(--t2)">' + v.label + '</span></div>' +
+      '<div style="text-align:right">' +
+      '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--tx)">' + p.toFixed(2) + '</div>' +
+      (chgStr ? '<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:' + chgCol + '">' + chgStr + '</div>' : '') +
+      '</div></div>';
+  });
+
+  tableEl.innerHTML = html || '<div style="color:var(--t3);font-size:12px">Data dočasně nedostupná</div>';
+  if (statEl) { statEl.textContent = 'LIVE'; statEl.className = 'bdg b-gn'; }
+  clearTimeout(window._vixTimer);
+  window._vixTimer = setTimeout(loadVixTable, 60000);
+}
+
+// ══════════════════════════════════════════════════
+// TESTING — AI kvízová sekce
+// ══════════════════════════════════════════════════
+let testState = { topic:'', total:0, current:0, score:0, qType:'mix', questions:[], answers:[] };
+let testQCount = 5;
+let testQType  = 'mix';
+let testScores = JSON.parse(localStorage.getItem('iq_scores') || '[]');
+
+function setQCount(n) {
+  testQCount = n;
+  [5,10,15,20].forEach(x => {
+    const b = document.getElementById('q-btn-' + x);
+    if (b) b.className = x === n ? 'btn bp' : 'btn bs';
+  });
+}
+function setQType(t) {
+  testQType = t;
+  ['mix','mc','calc','true'].forEach(x => {
+    const b = document.getElementById('qt-btn-' + x);
+    if (b) b.className = x === t ? 'btn bp' : 'btn bs';
+  });
+}
+
+function renderScores() {
+  const el = document.getElementById('test-scores');
+  if (!el) return;
+  if (!testScores.length) { el.innerHTML = '<div style="color:var(--t3);font-size:12px">Zatím žádné výsledky!</div>'; return; }
+  const sorted = [...testScores].sort((a,b) => (b.score/b.total) - (a.score/a.total)).slice(0, 8);
+  el.innerHTML = sorted.map(s => {
+    const pct = Math.round((s.score / s.total) * 100);
+    const col = pct >= 80 ? 'var(--gn)' : pct >= 60 ? 'var(--ac)' : pct >= 40 ? 'var(--or)' : 'var(--rd)';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(37,45,58,.3)">' +
+      '<div><div style="font-size:11px;font-weight:600;color:var(--tx)">' + esc(s.topic.substring(0,28)) + (s.topic.length > 28 ? '…' : '') + '</div>' +
+      '<div style="font-size:10px;color:var(--t3);font-family:\'DM Mono\',monospace">' + s.date + '</div></div>' +
+      '<div style="text-align:right"><span style="font-family:\'Syne\',sans-serif;font-weight:800;font-size:16px;color:' + col + '">' + pct + '%</span>' +
+      '<div style="font-size:10px;color:var(--t3);font-family:\'DM Mono\',monospace">' + s.score + '/' + s.total + '</div></div></div>';
+  }).join('');
+}
+renderScores();
+
+async function startTest(topic, difficulty) {
+  if (!topic || !topic.trim()) return;
+  topic = topic.trim();
+  testState = { topic, total: testQCount, current: 0, score: 0, qType: testQType, questions: [], answers: [] };
+
+  document.getElementById('test-running').classList.remove('hidden');
+  document.getElementById('test-results').classList.add('hidden');
+  document.getElementById('test-title').textContent = '🧠 ' + topic.substring(0, 40);
+  updateTestProgress();
+  await loadNextQuestion();
+}
+
+function updateTestProgress() {
+  const prog = document.getElementById('test-progress-badge');
+  const score = document.getElementById('test-score-badge');
+  const bar   = document.getElementById('test-progress-bar');
+  if (prog)  prog.textContent = 'Otázka ' + (testState.current + 1) + '/' + testState.total;
+  if (score) score.textContent = 'Skóre: ' + testState.score + '/' + testState.current;
+  if (bar)   bar.style.width = (testState.current / testState.total * 100) + '%';
+}
+
+async function loadNextQuestion() {
+  show('test-loading'); hide('test-question-wrap');
+  const qTypeInstr = testState.qType === 'mc' ? 'multiple choice (A/B/C/D)' :
+                     testState.qType === 'calc' ? 'výpočtová s číselnou odpovědí' :
+                     testState.qType === 'true' ? 'true/false' : 'mix (různé typy)';
+  const prevQ = testState.questions.length > 0 ? 'Předchozí otázky: ' + testState.questions.map(q=>q.q).join(' | ') : '';
+
+  try {
+    const raw = await callClaude([{ role:'user', content:
+      'Vygeneruj otázku č.' + (testState.current + 1) + ' z ' + testState.total + ' na téma: "' + testState.topic + '"\n' +
+      'Typ: ' + qTypeInstr + '\n' +
+      (prevQ ? prevQ + '\n' : '') +
+      'INSTRUKCE: Každá otázka musí být JINÁ a pokrývat jinou oblast tématu. Otázky musí být konkrétní a vzdělávací.\n\n' +
+      'Odpověz POUZE jako JSON (bez markdown, bez backticks):\n' +
+      '{"q":"text otázky","type":"mc|calc|tf","options":["A) ...", "B) ...","C) ...","D) ..."],"correct":"A","explanation":"Detailní vysvětlení proč je to správně — min. 3-4 věty s čísly a příklady","difficulty":"easy|medium|hard"}\n\n' +
+      'Pro true/false: options=["A) Pravda","B) Nepravda"], correct="A" nebo "B"\n' +
+      'Pro calc: options může být 4 číselné možnosti\n' +
+      'Explanation musí být VELMI PODROBNÉ — vysvětli proč je správná odpověď správná A proč jsou ostatní špatné.'
+    }],
+    'Jsi expert finanční lektor. Generuješ precizní, vzdělávací testové otázky. Odpovídáš POUZE validním JSON.',
+    800);
+
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Chyba formátu');
+    const q = JSON.parse(match[0]);
+    testState.questions.push(q);
+    renderQuestion(q);
+  } catch(e) {
+    // Fallback static question
+    const fallback = {q:'Jaký P/E poměr je obecně považován za "levný" pro zralou firmu?', type:'mc', options:['A) P/E < 10','B) P/E < 15','C) P/E < 25','D) P/E > 30'], correct:'B', explanation:'P/E pod 15 je tradičně považováno za hodnotu pod průměrem trhu. Historický průměr S&P 500 je ~16-17x. Warren Buffett hledá firmy pod 15x. Ale kontext záleží — rychle rostoucí firma s P/E 30 může být levnější než stagnující firma s P/E 10.', difficulty:'easy'};
+    testState.questions.push(fallback);
+    renderQuestion(fallback);
+  }
+}
+
+function renderQuestion(q) {
+  hide('test-loading');
+  show('test-question-wrap');
+  document.getElementById('test-question').textContent = q.q;
+  document.getElementById('test-feedback').classList.add('hidden');
+  document.getElementById('test-next-btn').classList.add('hidden');
+  document.getElementById('test-finish-btn').classList.add('hidden');
+
+  const optEl = document.getElementById('test-options');
+  optEl.innerHTML = q.options.map((opt, i) =>
+    '<button onclick="answerQuestion(' + JSON.stringify(q.correct) + ',' + JSON.stringify(opt.charAt(0)) + ',' + JSON.stringify(q.explanation) + ',' + JSON.stringify(q.options) + ')" ' +
+    'style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;cursor:pointer;text-align:left;font-size:13px;color:var(--tx);transition:all .2s;width:100%" ' +
+    'onmouseover="if(!this.disabled)this.style.borderColor=\'var(--ac)\'" onmouseout="if(!this.disabled)this.style.borderColor=\'var(--bd)\'">' + esc(opt) + '</button>'
+  ).join('');
+}
+
+function answerQuestion(correct, chosen, explanation, options) {
+  const isCorrect = chosen === correct;
+  if (isCorrect) testState.score++;
+  testState.answers.push({ correct: isCorrect, chosen });
+
+  // Disable all buttons and highlight
+  document.querySelectorAll('#test-options button').forEach(btn => {
+    btn.disabled = true;
+    const letter = btn.textContent.trim().charAt(0);
+    if (letter === correct) { btn.style.background = 'rgba(0,255,136,.15)'; btn.style.borderColor = 'var(--gn)'; btn.style.color = 'var(--gn)'; }
+    else if (letter === chosen && !isCorrect) { btn.style.background = 'rgba(255,71,87,.1)'; btn.style.borderColor = 'var(--rd)'; btn.style.color = 'var(--rd)'; }
+  });
+
+  // Feedback
+  const fb = document.getElementById('test-feedback');
+  fb.style.background = isCorrect ? 'rgba(0,255,136,.1)' : 'rgba(255,71,87,.07)';
+  fb.style.border = '1px solid ' + (isCorrect ? 'rgba(0,255,136,.3)' : 'rgba(255,71,87,.3)');
+  fb.innerHTML = (isCorrect ? '<strong style="color:var(--gn)">✓ Správně!</strong>' : '<strong style="color:var(--rd)">✗ Špatně</strong> — správná odpověď: <strong>' + correct + '</strong>') +
+    '<div style="margin-top:6px;font-size:12px;color:var(--t2);line-height:1.6">' + esc(explanation) + '</div>';
+  fb.classList.remove('hidden');
+
+  // Update score badge
+  document.getElementById('test-score-badge').textContent = 'Skóre: ' + testState.score + '/' + (testState.current + 1);
+
+  // Next or finish
+  testState.current++;
+  if (testState.current >= testState.total) {
+    document.getElementById('test-finish-btn').classList.remove('hidden');
+  } else {
+    document.getElementById('test-next-btn').classList.remove('hidden');
+  }
+}
+
+async function nextQuestion() {
+  hide('test-feedback');
+  updateTestProgress();
+  await loadNextQuestion();
+}
+
+async function finishTest() {
+  document.getElementById('test-running').classList.add('hidden');
+  const s = testState;
+  const pct = Math.round((s.score / s.total) * 100);
+  const grade = pct >= 90 ? { t:'Vynikající! 🏆', c:'var(--gn)' } :
+                pct >= 75 ? { t:'Velmi dobré! 🎯', c:'var(--ac)' } :
+                pct >= 60 ? { t:'Dobré 👍', c:'var(--or)' } :
+                pct >= 40 ? { t:'Podprůměrné 📚', c:'var(--or)' } :
+                            { t:'Opakuj materiál! 📖', c:'var(--rd)' };
+
+  // Save score
+  testScores.push({ topic: s.topic.substring(0,40), score: s.score, total: s.total, date: new Date().toLocaleDateString('cs-CZ'), pct });
+  localStorage.setItem('iq_scores', JSON.stringify(testScores.slice(-20)));
+  renderScores();
+
+  // Get AI feedback
+  let aiFeedback = '';
+  try {
+    aiFeedback = await callClaude([{ role:'user', content:
+      'Investor dokončil test na téma "' + s.topic + '" se skóre ' + s.score + '/' + s.total + ' (' + pct + '%).\n' +
+      'Odpovědi: ' + s.answers.map((a,i) => (i+1)+'. '+(a.correct?'✓':'✗')).join(' ') + '\n\n' +
+      'Napiš:\n1. Stručné zhodnocení výkonu\n2. Které oblasti jsou slabé (podle špatných odpovědí)\n3. Co konkrétně nastudovat — uveď 3 konkrétní kapitoly nebo pojmy\n4. Doporuč 1-2 konkrétní knihy k procvičení\n\nMax 200 slov. Buď konkrétní a motivující.'
+    }], 'Jsi finanční tutor. Odpovídáš česky, stručně a povzbudivě.', 600);
+  } catch(e) {}
+
+  document.getElementById('test-results').innerHTML = '<div class="card">' +
+    '<div class="ch"><div class="ct">🎯 Výsledky testu</div><button class="btn bp" onclick="resetTest()">Nový test</button></div>' +
+    '<div style="text-align:center;padding:20px 0">' +
+    '<div style="font-size:56px;font-weight:800;font-family:\'Syne\',sans-serif;color:' + grade.c + '">' + pct + '%</div>' +
+    '<div style="font-size:18px;color:' + grade.c + ';margin-bottom:4px">' + grade.t + '</div>' +
+    '<div style="font-size:13px;color:var(--t2);font-family:\'DM Mono\',monospace">' + s.score + ' správně z ' + s.total + ' · ' + esc(s.topic.substring(0,50)) + '</div></div>' +
+    '<div style="display:flex;gap:4px;justify-content:center;margin-bottom:16px">' +
+    s.answers.map(a => '<span style="width:20px;height:20px;border-radius:50%;background:' + (a.correct ? 'var(--gn)' : 'var(--rd)') + ';display:inline-block;font-size:11px;line-height:20px;text-align:center;color:var(--bg)">' + (a.correct ? '✓' : '✗') + '</span>').join('') + '</div>' +
+    (aiFeedback ? '<div class="aibox" style="margin-top:8px">' + esc(aiFeedback) + '</div>' : '') + '</div>';
+  document.getElementById('test-results').classList.remove('hidden');
+}
+
+function resetTest() {
+  testState = { topic:'', total:0, current:0, score:0, qType:'mix', questions:[], answers:[] };
+  document.getElementById('test-running').classList.add('hidden');
+  document.getElementById('test-results').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════════
+// PREDICTION — AI predikce cen
+// ══════════════════════════════════════════════════
+let savedPredictions = JSON.parse(localStorage.getItem('iq_preds') || '[]');
+let currentPredResult = null;
+
+function setPredTicker(t) { document.getElementById('pred-ticker').value = t; }
+
+function renderSavedPredictions() {
+  const el = document.getElementById('pred-saved-list');
+  if (!el) return;
+  if (!savedPredictions.length) { el.innerHTML = '<div style="color:var(--t3);font-size:12px;font-family:\'DM Mono\',monospace">Zatím žádné predikce</div>'; return; }
+  el.innerHTML = [...savedPredictions].reverse().slice(0, 10).map((p, i) => {
+    const bullCol = p.scenario === 'bull' ? 'var(--gn)' : p.scenario === 'bear' ? 'var(--rd)' : 'var(--ac)';
+    return '<div style="padding:8px;border:1px solid var(--bd);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .2s" ' +
+      'onclick="viewSavedPred(' + (savedPredictions.length - 1 - i) + ')" ' +
+      'onmouseover="this.style.borderColor=\'var(--ac)\'" onmouseout="this.style.borderColor=\'var(--bd)\'">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center">' +
+      '<strong style="font-family:\'Syne\',sans-serif;font-size:13px;color:var(--tx)">' + esc(p.ticker) + '</strong>' +
+      '<span class="bdg" style="background:rgba(0,212,255,.1);color:' + bullCol + ';border-color:transparent">' + esc(p.scenario) + ' · ' + esc(p.horizon) + '</span></div>' +
+      '<div style="font-size:10px;color:var(--t3);font-family:\'DM Mono\',monospace;margin-top:3px">' + esc(p.date) + '</div></div>';
+  }).join('');
+}
+renderSavedPredictions();
+
+function viewSavedPred(i) {
+  const p = savedPredictions[i];
+  if (!p) return;
+  document.getElementById('pred-result-title').textContent = '🔮 ' + p.ticker + ' · ' + p.horizon;
+  document.getElementById('pred-result-content').textContent = p.text;
+  document.getElementById('pred-result').classList.remove('hidden');
+  currentPredResult = p;
+  document.getElementById('pred-result').scrollIntoView({ behavior:'smooth' });
+}
+
+async function runPrediction() {
+  const ticker  = (document.getElementById('pred-ticker').value || '').trim().toUpperCase();
+  const horizon = document.getElementById('pred-horizon').value;
+  const scenario = document.getElementById('pred-scenario').value;
+  const context = (document.getElementById('pred-context').value || '').trim();
+  if (!ticker) { alert('Zadej ticker aktiva'); return; }
+
+  const btn = document.getElementById('pred-btn');
+  btn.disabled = true;
+  show('pred-loading');
+  document.getElementById('pred-result').classList.add('hidden');
+
+  const horizonMap = { '1W':'1 týden', '1M':'1 měsíc', '3M':'3 měsíce', '6M':'6 měsíců', '1Y':'1 rok', '2Y':'2 roky' };
+  const scenarioInstr = scenario === 'all'
+    ? 'Vygeneruj VŠECHNY 3 scénáře (bull, base, bear) každý samostatně s vlastním price targetem a pravděpodobností.'
+    : 'Fokus na ' + scenario + ' scénář.';
+
+  try {
+    const text = await callClaude([{ role:'user', content:
+      'Vygeneruj detailní cenovou predikci pro: ' + ticker + '\n' +
+      'Horizont: ' + (horizonMap[horizon] || horizon) + '\n' +
+      'Scénář: ' + scenarioInstr + '\n' +
+      (context ? 'Dodatečný kontext: ' + context + '\n' : '') + '\n' +
+      '## 1. Aktuální situace\n- Kde se cena nachází, klíčové úrovně, trend\n- Relevantní makro kontext pro toto aktivum\n\n' +
+      '## 2. Cenová predikce — konkrétní čísla\n- Price target pro ' + (horizonMap[horizon] || horizon) + ' (uveď rozsah např. 180-210 USD)\n- Pravděpodobnost dosažení: X%\n- Klíčové předpoklady predikce\n\n' +
+      (scenario === 'all' ? '## 3. Bull scénář\n- Podmínky kdy nastane\n- Price target + pravděpodobnost\n- Katalyzátory\n\n## 4. Base scénář\n- Podmínky kdy nastane\n- Price target + pravděpodobnost\n- Předpoklady\n\n## 5. Bear scénář\n- Podmínky kdy nastane\n- Price target + pravděpodobnost\n- Rizika\n\n' : '') +
+      '## ' + (scenario === 'all' ? '6' : '3') + '. Klíčové katalyzátory\n- Co způsobí pohyb nahoru\n- Co způsobí pohyb dolů\n- Data/eventy k sledování\n\n' +
+      '## ' + (scenario === 'all' ? '7' : '4') + '. Technické úrovně\n- Support a resistance zóny\n- Vstupní strategie (kde koupit/prodat)\n- Stop-loss a take-profit úrovně\n\n' +
+      '## ' + (scenario === 'all' ? '8' : '5') + '. Rizika predikce\n- Co může predikci zneplatnit\n- Black swan scénáře\n\n' +
+      '⚠️ Upozorni na konci, že toto je vzdělávací predikce, ne finanční poradenství.\n\n' +
+      'Buď VELMI konkrétní s čísly. Uváděj rozsahy price targetů.'
+    }],
+    'Jsi kvantitativní analytik a portfolio manažer s 20 lety zkušeností. Tvé predikce jsou vždy konkrétní, datově podložené a strukturované. Upřímně uvádíš nejistotu a rizika. Odpovídáš česky.',
+    4000);
+
+    currentPredResult = { ticker, horizon, scenario, context, text, date: new Date().toLocaleDateString('cs-CZ') };
+    document.getElementById('pred-result-title').textContent = '🔮 ' + ticker + ' · ' + (horizonMap[horizon] || horizon);
+    document.getElementById('pred-result-content').textContent = text;
+    document.getElementById('pred-result').classList.remove('hidden');
+    document.getElementById('pred-result').scrollIntoView({ behavior:'smooth' });
+  } catch(e) {
+    document.getElementById('pred-result-content').textContent = 'Chyba: ' + e.message;
+    document.getElementById('pred-result').classList.remove('hidden');
+  }
+  hide('pred-loading');
+  btn.disabled = false;
+}
+
+function savePrediction() {
+  if (!currentPredResult) return;
+  savedPredictions.push(currentPredResult);
+  if (savedPredictions.length > 50) savedPredictions = savedPredictions.slice(-50);
+  localStorage.setItem('iq_preds', JSON.stringify(savedPredictions));
+  renderSavedPredictions();
+  const btn = document.querySelector('#pred-result .btn.bs');
+  if (btn) { btn.textContent = '✓ Uloženo!'; btn.style.color = 'var(--gn)'; setTimeout(() => { btn.textContent = '💾 Uložit'; btn.style.color = ''; }, 2000); }
+}
+
+function clearPredictions() {
+  if (!confirm('Smazat všechny predikce?')) return;
+  savedPredictions = [];
+  localStorage.removeItem('iq_preds');
+  renderSavedPredictions();
+}
+
+// ══════════════════════════════════════════════════
+const OV_DEFAULT = [
+  {title:'Indexy', symbols:[{s:'FOREXCOM:SPXUSD',d:'S&P 500'},{s:'FOREXCOM:NSXUSD',d:'Nasdaq 100'},{s:'INDEX:DEU40',d:'DAX'},{s:'CBOE:VIX',d:'VIX'},{s:'TVC:DXY',d:'DXY'}]},
+  {title:'Komodity', symbols:[{s:'TVC:GOLD',d:'Gold'},{s:'TVC:SILVER',d:'Silver'},{s:'TVC:USOIL',d:'WTI Oil'},{s:'TVC:UKOIL',d:'Brent'},{s:'COMEX:HG1!',d:'Copper'}]},
+  {title:'Crypto', symbols:[{s:'BITSTAMP:BTCUSD',d:'Bitcoin'},{s:'BITSTAMP:ETHUSD',d:'Ethereum'},{s:'BINANCE:SOLUSDT',d:'Solana'},{s:'BINANCE:XRPUSDT',d:'XRP'}]},
+  {title:'Forex', symbols:[{s:'FX:EURUSD',d:'EUR/USD'},{s:'FX:GBPUSD',d:'GBP/USD'},{s:'FX:USDJPY',d:'USD/JPY'},{s:'FX:USDCZK',d:'USD/CZK'}]}
+];
+let ovTabs = JSON.parse(localStorage.getItem('iq_ov') || 'null') || OV_DEFAULT.map(t => ({...t, symbols:[...t.symbols]}));
+
+function openOverviewEdit() {
+  document.getElementById('ov-modal').style.display = 'flex';
+  renderOvTabs();
+}
+function closeOverviewEdit() { document.getElementById('ov-modal').style.display = 'none'; }
+function resetOverviewDefault() { ovTabs = OV_DEFAULT.map(t => ({...t, symbols:[...t.symbols]})); localStorage.removeItem('iq_ov'); renderOvTabs(); }
+
+function renderOvTabs() {
+  // Populate tab selector
+  const sel = document.getElementById('ov-tab-sel');
+  sel.innerHTML = ovTabs.map((t,i) => '<option value="' + i + '">' + esc(t.title) + '</option>').join('');
+
+  // Render tab list
+  document.getElementById('ov-tabs-list').innerHTML = ovTabs.map((tab,ti) =>
+    '<div style="margin-bottom:10px;padding:10px;background:var(--s2);border-radius:8px;border:1px solid var(--bd)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">' +
+    '<span style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px">' + esc(tab.title) + '</span>' +
+    '<button onclick="removeOvTab(' + ti + ')" style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--rd);border-radius:5px;padding:2px 8px;cursor:pointer;font-size:11px">✕ Tab</button>' +
+    '</div>' +
+    tab.symbols.map((sym,si) =>
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(37,45,58,.3)">' +
+      '<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--ac)">' + esc(sym.s) + '</span>' +
+      '<span style="font-size:11px;color:var(--t2)">' + esc(sym.d) + '</span>' +
+      '<button onclick="removeOvSym(' + ti + ',' + si + ')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0 4px">✕</button>' +
+      '</div>'
+    ).join('') +
+    '</div>'
+  ).join('');
+}
+
+function addOverviewTab() {
+  const name = (document.getElementById('ov-tab-name').value||'').trim();
+  if (!name) return;
+  ovTabs.push({title: name, symbols: []});
+  document.getElementById('ov-tab-name').value = '';
+  renderOvTabs();
+}
+function removeOvTab(ti) { ovTabs.splice(ti,1); renderOvTabs(); }
+function addOverviewSym() {
+  const s = (document.getElementById('ov-sym').value||'').trim().toUpperCase();
+  const d = (document.getElementById('ov-sym-lbl').value||'').trim() || s;
+  const ti = parseInt(document.getElementById('ov-tab-sel').value);
+  if (!s || isNaN(ti) || !ovTabs[ti]) return;
+  ovTabs[ti].symbols.push({s, d});
+  document.getElementById('ov-sym').value='';
+  document.getElementById('ov-sym-lbl').value='';
+  renderOvTabs();
+}
+function removeOvSym(ti, si) { ovTabs[ti].symbols.splice(si,1); renderOvTabs(); }
+
+function applyOverviewEdit() {
+  localStorage.setItem('iq_ov', JSON.stringify(ovTabs));
+  closeOverviewEdit();
+  rebuildOverviewWidget();
+}
+function rebuildOverviewWidget() {
+  const wrap = document.getElementById('overview-widget-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
+  const s = document.createElement('script');
+  s.async = true;
+  s.type = 'text/javascript';
+  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
+  s.text = JSON.stringify({
+    colorTheme:'dark', dateRange:'3M', showChart:true, locale:'cs',
+    isTransparent:true, showSymbolLogo:true, width:'100%', height:'420',
+    tabs: ovTabs.map(t => ({title:t.title, symbols:t.symbols.map(sym => ({s:sym.s,d:sym.d}))}))
+  });
+  wrap.appendChild(s);
+}
+
+// On load — apply saved overview if exists
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('iq_ov');
+  if (saved) { try { ovTabs = JSON.parse(saved); rebuildOverviewWidget(); } catch(e){} }
+}, {once:true});
+
+// ══════════════════════════════════════════════════
+// TICKER TAPE EDITOR
+// ══════════════════════════════════════════════════
+const TICKER_DEFAULT = [
+  {proName:'FOREXCOM:SPXUSD',title:'S&P 500'},{proName:'FOREXCOM:NSXUSD',title:'Nasdaq'},
+  {proName:'CBOE:VIX',title:'VIX'},{proName:'TVC:US10Y',title:'10Y Yield'},
+  {proName:'TVC:GOLD',title:'Gold'},{proName:'TVC:SILVER',title:'Silver'},
+  {proName:'TVC:USOIL',title:'WTI Oil'},{proName:'TVC:NGAS',title:'Nat. Gas'},
+  {proName:'BITSTAMP:BTCUSD',title:'Bitcoin'},{proName:'BITSTAMP:ETHUSD',title:'Ethereum'},
+  {proName:'FX:EURUSD',title:'EUR/USD'},{proName:'FX:USDCZK',title:'USD/CZK'},
+  {proName:'TVC:DXY',title:'DXY'},{proName:'COMEX:HG1!',title:'Copper'},{proName:'TVC:UKOIL',title:'Brent'}
+];
+let tickerSyms = JSON.parse(localStorage.getItem('iq_ticker') || 'null') || TICKER_DEFAULT;
+
+function openTickerEdit() {
+  document.getElementById('ticker-modal').style.display = 'flex';
+  renderTickerEditList();
+}
+function closeTickerEdit() { document.getElementById('ticker-modal').style.display = 'none'; }
+function resetTickerDefault() { tickerSyms = [...TICKER_DEFAULT]; localStorage.removeItem('iq_ticker'); renderTickerEditList(); }
+function renderTickerEditList() {
+  document.getElementById('ticker-edit-list').innerHTML = tickerSyms.map((s,i) =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd)">' +
+    '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--ac)">' + esc(s.proName) + '</span>' +
+    '<span style="font-size:11px;color:var(--t2)">' + esc(s.title) + '</span>' +
+    '<button onclick="removeTickerSym(' + i + ')" style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--rd);border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+function addTickerSym() {
+  const sym = (document.getElementById('ticker-sym-inp').value||'').trim().toUpperCase();
+  const lbl = (document.getElementById('ticker-lbl-inp').value||'').trim() || sym;
+  if (!sym) return;
+  tickerSyms.push({proName: sym, title: lbl});
+  document.getElementById('ticker-sym-inp').value='';
+  document.getElementById('ticker-lbl-inp').value='';
+  renderTickerEditList();
+}
+function removeTickerSym(i) { tickerSyms.splice(i,1); renderTickerEditList(); }
+function applyTickerEdit() {
+  localStorage.setItem('iq_ticker', JSON.stringify(tickerSyms));
+  closeTickerEdit();
+  // Rebuild ticker widget
+  const wrap = document.getElementById('ticker-tv');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
+  s.text = JSON.stringify({symbols: tickerSyms, showSymbolLogo:true, isTransparent:true, displayMode:'adaptive', colorTheme:'dark', locale:'cs'});
+  wrap.appendChild(s);
+}
+
+
+function openFxEdit() { document.getElementById('fx-edit').classList.remove('hidden'); renderFxEditList(); }
+function closeFxEdit() { document.getElementById('fx-edit').classList.add('hidden'); }
+function renderFxEditList() {
+  document.getElementById('fx-edit-list').innerHTML = fxSymbols.map((s,i) =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd)">' +
+    '<span style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--ac)">' + esc(s.ticker) + '</span>' +
+    '<span style="font-size:11px;color:var(--t2)">' + esc(s.label) + '</span>' +
+    '<span style="font-size:10px;color:var(--t3)">' + esc(s.cat) + '</span>' +
+    '<button onclick="removeFxItem(' + i + ')" style="background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--rd);border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px">✕</button>' +
+    '</div>'
+  ).join('');
+}
+function addFxItem() {
+  const tk  = (document.getElementById('fx-inp').value||'').trim().toUpperCase();
+  const lb  = (document.getElementById('fx-lbl').value||'').trim() || tk;
+  const cat = document.getElementById('fx-cat').value;
+  if (!tk) return;
+  const flags = {Komodity:'📦',Forex:'💱',Crypto:'🔮',Akcie:'📈'};
+  fxSymbols.push({ticker:tk, label:lb, cat, flag:flags[cat]||'📦'});
+  localStorage.setItem('iq_fx', JSON.stringify(fxSymbols));
+  document.getElementById('fx-inp').value='';
+  document.getElementById('fx-lbl').value='';
+  renderFxEditList();
+  loadFxTable();
+}
+function removeFxItem(i) {
+  fxSymbols.splice(i,1);
+  localStorage.setItem('iq_fx', JSON.stringify(fxSymbols));
+  renderFxEditList();
+  loadFxTable();
+}
+
+// ══════════════════════════════════════════════════
+// EDUCATION
+// ══════════════════════════════════════════════════
+let eduTopic='', eduHist=[];
+
+async function loadEdu(topic, desc) {
+  eduTopic=topic; eduHist=[];
+  hide('edu-grid'); show('edu-detail');
+  setText('edu-title', topic);
+  setHTML('edu-chat','<div style="color:var(--t3);font-size:13px">Zeptej se tutora na cokoliv...</div>');
+  show('edu-load'); hide('edu-content');
+  try {
+    const text = await callClaude([{role:'user',content:
+      'Vytvoř MAXIMÁLNĚ PODROBNÝ a KOMPLETNÍ vzdělávací průvodce na téma: "' + topic + '"\n' +
+      'Kontext: ' + desc + '\n\n' +
+      'DŮLEŽITÉ: Toto je vzdělávací platforma pro investory. Piš jako university profesor + praktický trader kombinovaný. Každá sekce musí být VELMI DETAILNÍ — ne jen odrážky, ale skutečné odstavce s hloubkou. Používej KONKRÉTNÍ čísla, vzorce, reálné příklady z trhu.\n\n' +
+      '## 1. Úvod a definice\n' +
+      '- Přesná akademická definice\n- Původ a historický vývoj konceptu\n- Proč je toto kriticky důležité pro každého investora\n- Jak toto téma zapadá do širšího investičního světa\n\n' +
+      '## 2. Jak to funguje — kompletní mechanismus\n' +
+      '- Detailní krok za krokem jak to funguje\n- Všechny matematické vzorce s vysvětlením každé proměnné\n- Min. 4 konkrétní číselné příklady s reálnými čísly z trhu (použij skutečné firmy)\n- Edge cases a výjimky\n\n' +
+      '## 3. Klíčové pojmy, metriky a ukazatele\n' +
+      '- Kompletní slovník pojmů s detailním vysvětlením\n- Co každá metrika přesně měří\n- Jak interpretovat hodnoty (benchmarky — co je skvělé, dobré, průměrné, špatné)\n- Jak spolu metriky vzájemně souvisí\n\n' +
+      '## 4. Typy, kategorie a varianty\n' +
+      '- Všechny důležité typy/druhy v rámci tématu\n- Detailní srovnání: kdy který použít\n- Výhody a nevýhody každého s příklady\n\n' +
+      '## 5. Praktické využití — strategie profesionálů\n' +
+      '- Min. 3 konkrétní investiční strategie s číselnými příklady\n- Jak to používají hedge fondy, value investoři, quantové fondy\n- Reálné case studies (konkrétní firmy/situace)\n- Načasování: kdy je vhodné tuto analýzu dělat\n\n' +
+      '## 6. Nejčastější chyby a jak se jim vyhnout\n' +
+      '- Min. 6 konkrétních chyb začátečníků i středně pokročilých\n- Proč k těmto chybám dochází (psychologické i analytické důvody)\n- Konkrétní návod jak každou chybu eliminovat\n\n' +
+      '## 7. Rizika, omezení a kritika\n' +
+      '- Akademická kritika metody\n- Situace kdy to nefunguje\n- Jak kombinovat s jinými přístupy pro lepší výsledky\n\n' +
+      '## 8. Krok za krokem — akční plán pro začátečníka\n' +
+      '- Konkrétní postup jak začít od nuly\n- Co potřebuješ (data, nástroje, znalosti)\n- Jak postupovat v prvních 30/90/365 dnech\n\n' +
+      '## 9. Pokročilé techniky pro zkušené investory\n' +
+      '- Co dělají profesionálové navíc\n- Kvantitativní přístupy a modely\n- Jak to kombinovat s dalšími metodami\n\n' +
+      '## 10. Doporučené studijní materiály — KOMPLETNÍ SEZNAM\n\n' +
+      '### 📚 Knihy (min. 7 knih):\n' +
+      'Pro každou knihu uveď: Název, Autor, Rok vydání, Nakladatelství, Proč ji číst (2-3 věty), Pro koho je vhodná (začátečník/pokročilý), Klíčové poznatky z knihy\n\n' +
+      '### 🌐 Online kurzy a weby (min. 5):\n' +
+      'Uveď název, URL nebo platformu, co se tam naučíš, zda je zdarma nebo placené\n\n' +
+      '### 🎓 Akademické studie a výzkumy (min. 3):\n' +
+      'Uveď autory, název studie, rok, kde ji najít, klíčové závěry\n\n' +
+      '### 🎙️ Podcasty a YouTube kanály (min. 4):\n' +
+      'Název, kde najít, proč poslouchat\n\n' +
+      '### 📰 Nejlepší články a zdroje dat:\n' +
+      'Konkrétní weby kde najít data a analýzy k tomuto tématu\n\n' +
+      'Piš ČESKY, velmi podrobně — tento průvodce musí být tak dobrý, že ho investor může použít jako referenční manuál. Min. délka odpovědi je 2000 slov.'
+    }],
+    'Jsi kombinace: (1) Profesor financí z CFA programu, (2) Hedge fund manažer s 20 lety praxe, (3) Bestseller autor knih o investování. ' +
+    'Tvé vzdělávací materiály jsou legendární svou hloubkou a praktičností. Nikdy nepíšeš povrchní odpovědi — jdeš vždy do maximální hloubky. ' +
+    'Používáš konkrétní čísla, reálné příklady z trhu, matematické vzorce a citace z akademické literatury. ' +
+    'Každé vysvětlení doplňuješ příkladem z reálné firmy. Odpovídáš výhradně česky.',
+    5000);
+    showAI('edu-content', text);
+  } catch(e) {
+    showErr('edu-content', e.message.includes('fetch')
+      ? 'Chyba připojení k serveru. Ujisti se, že aplikace běží na Vercelu a API klíč je nastaven v Environment Variables.'
+      : e.message);
+  }
+  hide('edu-load');
+}
+
+function backEdu() { show('edu-grid'); hide('edu-detail'); }
+
+async function sendEdu() {
+  const inp=$('edu-inp'), msg=(inp.value||'').trim();
+  if(!msg||!eduTopic) return;
+  inp.value='';
+  const chat=$('edu-chat');
+  if(!chat.querySelector('.msg')) chat.innerHTML='';
+  const u=document.createElement('div'); u.className='msg u'; u.textContent=msg; chat.appendChild(u);
+  eduHist.push({role:'user',content:msg});
+  show('edu-chat-load');
+  try {
+    const text=await callClaude(eduHist,
+      'Jsi kombinace: CFA profesor + hedge fund manažer s 20 lety praxe specializující se na téma "' + eduTopic + '". ' +
+      'PRAVIDLA PRO KAŽDOU ODPOVĚĎ:\n' +
+      '1. Vždy odpovídáš velmi podrobně — min. 300 slov na složitější otázky\n' +
+      '2. Používáš konkrétní čísla a reálné příklady (konkrétní firmy, roky, hodnoty)\n' +
+      '3. Kde relevantní, uvádíš matematické vzorce\n' +
+      '4. Vždy vysvětlíš praktické využití — co s tím investor konkrétně udělá\n' +
+      '5. Na konci každé delší odpovědi přidej sekci "📚 Doporuč zdroj" — konkrétní knihu, článek nebo podcast\n' +
+      '6. Pokud se ptají na pojmy, vysvětlíš je od základu až po pokročilé použití\n' +
+      '7. Nikdy nedáváš krátké nebo povrchní odpovědi\n' +
+      'Odpovídáš česky.',
+      3000);
+    eduHist.push({role:'assistant',content:text});
+    const a=document.createElement('div'); a.className='msg a'; a.textContent=text; chat.appendChild(a);
+  } catch(e) {
+    const a=document.createElement('div'); a.className='msg a'; a.style.color='var(--rd)'; a.textContent='Chyba: '+e.message; chat.appendChild(a);
+  }
+  hide('edu-chat-load');
+  chat.scrollTop=chat.scrollHeight;
+}
+
+// ══════════════════════════════════════════════════
+// ADVISOR
+// ══════════════════════════════════════════════════
+let advHist=[];
+function setAdv(t){$('adv-inp').value=t;}
+
+async function sendAdv() {
+  const inp=$('adv-inp'), msg=(inp.value||'').trim();
+  if(!msg) return;
+  inp.value='';
+  const chat=$('adv-chat');
+  const u=document.createElement('div'); u.className='msg u'; u.textContent=msg; chat.appendChild(u);
+  advHist.push({role:'user',content:msg});
+  $('adv-btn').disabled=true; show('adv-load');
+  chat.scrollTop=chat.scrollHeight;
+  try {
+    const text=await callClaude(advHist,
+      'Jsi ELITNÍ investiční poradce: kombinace Goldman Sachs analytik + CFA portfolio manažer + bestseller autor knih o investování. ' +
+      'Specializuješ se na investory z České republiky a střední Evropy.\n\n' +
+      'ABSOLUTNÍ PRAVIDLA PRO KAŽDOU ODPOVĚĎ:\n' +
+      '1. NIKDY nedáváš krátké nebo povrchní odpovědi — minimum je 400 slov na substantivní otázky\n' +
+      '2. VŽDY používáš konkrétní čísla, data, roky, procentuální změny\n' +
+      '3. VŽDY uvádíš konkrétní příklady z reálného trhu (konkrétní firmy, ETF, tickery)\n' +
+      '4. Pokud se ptají na akcii/ETF: analyzuješ ji s P/E, growth, riziky, konkurenty\n' +
+      '5. Pokud se ptají na strategii: popis krok za krokem s čísly a timeline\n' +
+      '6. Pokud se ptají na makro: vysvětlíš mechanismus + dopad na konkrétní investice\n' +
+      '7. Na konci každé odpovědi: sekce "🎯 Akční krok" — co přesně dělat\n' +
+      '8. Na konci každé delší odpovědi: sekce "📚 Pro hlubší studium" — konkrétní kniha/podcast/web\n' +
+      '9. Nejde o finanční poradenství — ale přesto buď konkrétní a praktický\n' +
+      'Odpovídáš česky.',
+      4000);
+    advHist.push({role:'assistant',content:text});
+    const a=document.createElement('div'); a.className='msg a'; a.textContent=text; chat.appendChild(a);
+  } catch(e) {
+    const a=document.createElement('div'); a.className='msg a'; a.style.color='var(--rd)'; a.textContent='Chyba: '+e.message; chat.appendChild(a);
+  }
+  hide('adv-load'); $('adv-btn').disabled=false;
+  chat.scrollTop=chat.scrollHeight;
+}
+</script>
+</body>
+</html>
